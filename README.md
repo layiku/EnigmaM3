@@ -2,6 +2,8 @@ English | [简体中文](README.zh-CN.md) | [Deutsch](README.de.md)
 
 # Enigma M3 — Interactive 3D Simulator
 
+![Enigma M3 3D simulator screenshot](EnigemaM3.png)
+
 `enigma_m3.html` is a single-file, browser-based 3D simulation of the German WWII **Enigma M3** cipher machine. The model is built procedurally with Three.js (no external 3D models), animated with GSAP, and backed by a cryptographically authentic M3 engine.
 
 ## Features

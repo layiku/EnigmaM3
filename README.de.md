@@ -2,6 +2,8 @@
 
 # Enigma M3 — Interaktiver 3D-Simulator
 
+![Enigma M3 3D-Simulator Screenshot](EnigemaM3.png)
+
 `enigma_m3.html` ist eine browserbasierte 3D-Simulation der deutschen Chiffriermaschine **Enigma M3** aus dem Zweiten Weltkrieg in einer einzigen Datei. Das Modell wird prozedural mit Three.js erzeugt (keine externen 3D-Modelle), mit GSAP animiert und von einer kryptographisch authentischen M3-Engine angetrieben.
 
 ## Funktionen
