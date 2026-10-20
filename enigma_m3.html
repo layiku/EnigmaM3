@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ENIGMA M3 · 恩尼格玛密码机 3D 模拟</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--brass:#c9a24a;--brass2:#8a6a2a;--paper:#e8dcb5;--ink:#2a2116;--panel:#1b1a17;--amber:#ffb347;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0a09;font-family:"Courier New",Courier,monospace;color:var(--paper)}
+#c{position:fixed;inset:0;display:block}
+#bFix{flex:0 0 auto;padding:4px 8px}
+#ui{overflow-x:hidden;position:fixed;left:14px;top:14px;width:300px;max-height:calc(100% - 200px);overflow-y:auto;background:linear-gradient(#24221d,#171612);border:2px solid var(--brass2);box-shadow:0 0 0 1px #000,0 8px 30px #000a,inset 0 0 20px #0008;padding:12px;border-radius:4px;z-index:5}
+#ui h1{margin:0 0 4px;font-size:18px;letter-spacing:4px;color:var(--brass);text-shadow:0 1px 0 #000}
+#ui .sub{font-size:10px;color:#9a8f72;letter-spacing:2px;margin-bottom:10px;border-bottom:1px dashed #5a4a2a;padding-bottom:6px}
+.sec{margin:10px 0;padding:8px;border:1px solid #3a3326;background:#0e0d0b88}
+.sec h2{margin:0 0 6px;font-size:11px;letter-spacing:3px;color:#d8c38a}
+.row{display:flex;gap:6px;align-items:center;margin:4px 0;font-size:11px}
+.row.g3{display:grid;grid-template-columns:78px repeat(3,minmax(0,1fr));gap:5px;width:100%}
+.row.g3 select{min-width:0;width:100%;box-sizing:border-box}
+.row.g3 .span3{grid-column:span 3}
+.row.g3 label{width:auto;overflow-wrap:anywhere}
+.row label{width:78px;flex:0 0 78px;color:#a99a76;line-height:1.15;font-size:10px}
+select,textarea{background:#efe3bf;color:var(--ink);border:1px solid #6b5426;font-family:inherit;font-weight:bold}
+select{padding:2px;flex:1}
+textarea{width:100%;height:56px;resize:vertical;padding:4px;font-size:12px;text-transform:uppercase}
+button{background:linear-gradient(#4a3f2a,#2a2318);color:#f0dca0;border:1px solid var(--brass);font-family:inherit;font-size:11px;letter-spacing:1px;padding:6px 8px;cursor:pointer;border-radius:2px;box-shadow:0 2px 0 #000,inset 0 1px 0 #ffffff22}
+button:hover{background:linear-gradient(#6a5a36,#3a3020)}
+button:active{transform:translateY(1px);box-shadow:0 1px 0 #000}
+button.on{background:linear-gradient(#8a5a1a,#5a3a10);color:#fff2c0;box-shadow:0 0 8px #ffb34788}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+#pairs{font-size:12px;color:var(--amber);word-spacing:4px;min-height:16px;line-height:1.5}
+#msg{font-size:10px;color:#c88;min-height:12px}
+#tapes{position:fixed;left:0;right:0;bottom:0;padding:8px 14px 10px;background:linear-gradient(#0000,#000c 30%);z-index:4}
+.tape{position:relative;background:repeating-linear-gradient(90deg,#e9dcb3 0 22px,#e3d4a6 22px 23px);color:#2b2015;font-size:17px;font-weight:bold;letter-spacing:2px;padding:6px 10px 6px 110px;margin:5px 0;height:36px;line-height:24px;white-space:nowrap;overflow:hidden;border-top:1px dotted #9b8550;border-bottom:1px dotted #9b8550;box-shadow:0 3px 8px #000a;direction:rtl;text-align:left}
+.tape span{direction:ltr;unicode-bidi:embed}
+.tape b{position:absolute;left:0;top:0;bottom:0;width:100px;background:#3a2a18;color:var(--brass);font-size:10px;display:flex;align-items:center;justify-content:center;letter-spacing:2px;direction:ltr}
+#help{position:fixed;right:14px;top:14px;width:250px;max-height:calc(100vh - 150px);overflow-y:auto;overflow-x:hidden;font-size:10px;color:#a99a76;background:#0e0d0bcc;border:1px solid #3a3326;padding:8px;line-height:1.6;z-index:5}
+#win{position:fixed;left:0;top:14px;display:flex;align-items:center;gap:6px;z-index:6;padding:6px 8px 6px 4px;background:#0e0d0bdd;border:1px solid var(--brass2);border-radius:3px;cursor:move;user-select:none;touch-action:none;box-shadow:0 4px 14px #000a}
+#flow{position:fixed;display:none;flex-direction:column;z-index:7;background:linear-gradient(#14110c,#0a0907);border:1px solid #8a6a2a;border-radius:4px;resize:both;overflow:hidden;min-width:420px;min-height:220px;box-shadow:0 8px 30px #000c,inset 0 0 20px #0008}
+#flow .fh{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:3px 8px;background:linear-gradient(#3a2f1c,#211a10);color:#e8c873;font-size:11px;letter-spacing:3px;user-select:none;touch-action:none;border-bottom:1px solid #5a4a2a}
+#flow .fx{padding:1px 7px;font-size:11px}
+#flow canvas{flex:1;width:100%;min-height:0;display:block}
+#flow .ff{font-size:11px;color:#ffb347;padding:3px 8px;border-top:1px dashed #5a4a2a;white-space:nowrap;overflow:hidden;height:20px;letter-spacing:1px}
+#win .wcol{display:flex;flex-direction:column;align-items:center;gap:6px}
+#win .tiles{display:flex;gap:6px}
+#pad{display:grid;grid-template-columns:repeat(3,30px);grid-auto-rows:26px;gap:3px;cursor:default}
+#pad button{padding:0;font-size:13px;line-height:1;background:radial-gradient(circle at 35% 30%,#e8c873,#a07a2c 60%,#5a4114);color:#2a1d0c;border:1px solid #3a2a10;border-radius:4px;box-shadow:0 2px 0 #000,inset 0 1px 0 #fff6;text-shadow:0 1px 0 #f3d98a;touch-action:none}
+#pad button:active{transform:translateY(1px);box-shadow:0 1px 0 #000,inset 0 1px 3px #0008}
+#pad button[data-pan=home]{border-radius:50%}
+#win .grip{width:10px;align-self:stretch;min-height:40px;border:0;box-shadow:none;background:repeating-linear-gradient(#8a6a2a 0 2px,transparent 2px 5px);cursor:move}
+#win div.t{width:34px;height:40px;background:#efe3bf;color:#2a2116;font-size:24px;font-weight:bold;display:flex;align-items:center;justify-content:center;border:3px solid var(--brass2);border-radius:3px;box-shadow:inset 0 3px 6px #0008}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>#lang{display:flex;gap:4px;margin-bottom:8px}#lang button{flex:1;padding:4px}#lang button.on{box-shadow:0 0 8px #ffb34788,inset 0 0 6px #000}</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="lang"><button data-lang="en">EN</button><button data-lang="zh">中文</button><button data-lang="de">DE</button><button id="bFix" data-i18n="fix" data-i18n-title="fixT"></button></div>
+  <h1>ENIGMA M3</h1>
+  <div class="sub" data-i18n="sub"></div>
+  <div class="sec"><h2 data-i18n="rotors"></h2>
+    <div class="row g3"><label data-i18n="rotor"></label><select id="o0"></select><select id="o1"></select><select id="o2"></select></div>
+    <div class="row g3"><label data-i18n="ring" data-i18n-title="ringT"></label><select id="r0"></select><select id="r1"></select><select id="r2"></select></div>
+    <div class="row g3"><label data-i18n="pos"></label><select id="p0"></select><select id="p1"></select><select id="p2"></select></div>
+    <div class="row g3"><label data-i18n="refl"></label><select id="refl" class="span3"><option value="B">UKW-B</option><option value="C">UKW-C</option></select></div>
+  </div>
+  <div class="sec"><h2 data-i18n="plugboard"></h2>
+    <div id="pairs"></div><div id="msg"></div>
+    <div class="btns" style="margin-top:6px">
+      <button id="bFocus" data-i18n="focus" data-i18n-title="focusT"></button><button id="bOver" data-i18n="over" data-i18n-title="overT"></button>
+      <button id="bRand" data-i18n="rand" data-i18n-title="randT"></button><button id="bClear" data-i18n="clear" data-i18n-title="clearT"></button>
+      <button id="bHist" data-i18n="hist" data-i18n-title="histT"></button><button id="bExplode" data-i18n-title="explodeT"></button>
+    </div>
+  </div>
+  <div class="sec"><h2 data-i18n="auto"></h2>
+    <textarea id="txt" data-i18n-ph="ph">HELLOWORLD</textarea>
+    <div class="btns" style="margin-top:5px"><button id="bAuto" data-i18n="play"></button><button id="bStop" data-i18n="stop"></button>
+    <button id="bResetPos" data-i18n="resetPos" data-i18n-title="resetPosT"></button><button id="bTape" data-i18n="clearTape"></button><button id="bFlow" data-i18n="flow" data-i18n-title="flowT" style="grid-column:span 2"></button></div>
+  </div>
+</div>
+<div id="help" data-i18n-html="help"></div>
+<div id="win" data-i18n-title="winT"><div class="grip"></div><div class="wcol"><div class="tiles"><div class="t" id="w0">A</div><div class="t" id="w1">A</div><div class="t" id="w2">A</div></div><div id="pad"><button data-pan="fwd" data-i18n-title="panFwd">⇑</button><button data-pan="up" data-i18n-title="panUp">▲</button><button data-pan="back" data-i18n-title="panBack">⇓</button>
+<button data-pan="left" data-i18n-title="panLeft">◀</button><button data-pan="home" data-i18n-title="panHome">◎</button><button data-pan="right" data-i18n-title="panRight">▶</button>
+<span></span><button data-pan="down" data-i18n-title="panDown">▼</button><span></span></div></div></div>
+<div id="tapes">
+  <div class="tape"><b data-i18n="tin"></b><span id="tIn"></span></div>
+  <div class="tape"><b data-i18n="tout"></b><span id="tOut"></span></div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ---- perf helper: merge static meshes under `container` into one mesh per material ---- */
+const _bakeInv = new THREE.Matrix4(), _bakeM = new THREE.Matrix4();
+function bakeStatic(container) {
+  container.updateMatrixWorld(true);
+  _bakeInv.copy(container.matrixWorld).invert();
+  const buckets = new Map(), victims = [];
+  container.traverse(o => {
+    if (!o.isMesh || o === container || Array.isArray(o.material) || o.userData.noBake || !o.material.visible) return;
+    for (let p = o.parent; p && p !== container; p = p.parent) if (p.userData.noBake) return;
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    if (!g.attributes.uv || !g.attributes.normal) { g.dispose(); return; }
+    g.clearGroups(); g.applyMatrix4(_bakeM.multiplyMatrices(_bakeInv, o.matrixWorld));
+    let b = buckets.get(o.material); if (!b) buckets.set(o.material, b = { gs: [], cast: false });
+    b.gs.push(g); b.cast = b.cast || o.castShadow; victims.push(o);
+  });
+  const oldGeos = new Set(victims.map(v => v.geometry));
+  victims.forEach(o => o.parent.remove(o));
+  container.traverse(o => { if (o.geometry) oldGeos.delete(o.geometry); });
+  oldGeos.forEach(g => g.dispose());
+  const out = new THREE.Group(); out.name = 'baked';
+  for (const [mat, b] of buckets) { const m = new THREE.Mesh(mergeGeometries(b.gs, false), mat); m.castShadow = b.cast; m.receiveShadow = true; out.add(m); b.gs.forEach(g => g.dispose()); }
+  container.add(out); return out;
+}
+function disposeTree(o, mats = false) { o.traverse(n => { if (n.geometry) n.geometry.dispose(); if (mats && n.material && !n.material.userData?.shared) (Array.isArray(n.material) ? n.material : [n.material]).forEach(m => m.dispose()); }); }
+const gsap = window.gsap;
+
+/* ============================================================
+   1. CRYPTO CORE
+   ============================================================ */
+class EnigmaEngine {
+  static ROTORS = {
+    I:   { wiring: 'EKMFLGDQVZNTOWYHXUSPAIBRCJ', notch: 'Q' },
+    II:  { wiring: 'AJDKSIRUXBLHWTMCQGZNPYFVOE', notch: 'E' },
+    III: { wiring: 'BDFHJLCPRTXVZNYEIWGAKMUSQO', notch: 'V' },
+    IV:  { wiring: 'ESOVPZJAYQUIRHXLNFTGKDCMWB', notch: 'J' },
+    V:   { wiring: 'VZBRGITYUPSDNHLXAWMJQOFECK', notch: 'Z' },
+    VI:  { wiring: 'JPGVOUMFYQBENHZRDKASXLICTW', notch: 'ZM' },
+    VII: { wiring: 'NZJHGRCXMYSWBOUFAIVLPEKQDT', notch: 'ZM' },
+    VIII:{ wiring: 'FKQHTLXOCBJSPDZRAMEWNIUYGV', notch: 'ZM' }
+  };
+  static REFLECTOR_B = 'YRUHQSLDPXNGOKMIEBFZCWVJAT';
+  static REFLECTORS = { B: 'YRUHQSLDPXNGOKMIEBFZCWVJAT', C: 'FVPJIAOYEDRZXWGCTKUQSBNMHL' };
+  static A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  constructor() {
+    this.order = ['I', 'II', 'III'];   // left, middle, right
+    this.rings = [0, 0, 0];
+    this.positions = [0, 0, 0];
+    this.setReflector('B');
+    this.plug = [...Array(26).keys()];
+    this._build();
+  }
+  setReflector(name) { this.reflectorName = name; this.reflector = EnigmaEngine.REFLECTORS[name].split('').map(c => c.charCodeAt(0) - 65); }
+  _build() {
+    this.fw = []; this.bw = []; this.notch = [];
+    this.order.forEach((n, i) => {
+      const d = EnigmaEngine.ROTORS[n];
+      const f = d.wiring.split('').map(c => c.charCodeAt(0) - 65);
+      const b = new Array(26); f.forEach((v, k) => b[v] = k);
+      this.fw[i] = f; this.bw[i] = b; this.notch[i] = d.notch.split('').map(c => c.charCodeAt(0) - 65);
+    });
+  }
+  static idx(c) { return c.toUpperCase().charCodeAt(0) - 65; }
+  static chr(i) { return String.fromCharCode(65 + ((i % 26) + 26) % 26); }
+  setRotorOrder(order) { this.order = order.slice(); this._build(); }
+  setRings(r) { this.rings = [...r].map(x => typeof x === 'string' ? EnigmaEngine.idx(x) : x); }
+  setPositions(p) { this.positions = [...p].map(x => typeof x === 'string' ? EnigmaEngine.idx(x) : x); }
+  getPositionString() { return this.positions.map(EnigmaEngine.chr).join(''); }
+  // ---- plugboard ----
+  get pairs() {
+    const out = [];
+    for (let i = 0; i < 26; i++) if (this.plug[i] > i) out.push(EnigmaEngine.chr(i) + EnigmaEngine.chr(this.plug[i]));
+    return out;
+  }
+  isPlugged(c) { const i = EnigmaEngine.idx(c); return this.plug[i] !== i; }
+  connect(a, b) {
+    const i = EnigmaEngine.idx(a), j = EnigmaEngine.idx(b);
+    if (i === j || this.plug[i] !== i || this.plug[j] !== j || this.pairs.length >= 13) return false;
+    this.plug[i] = j; this.plug[j] = i; return true;
+  }
+  disconnect(a) {
+    const i = EnigmaEngine.idx(a), j = this.plug[i];
+    if (j === i) return false;
+    this.plug[i] = i; this.plug[j] = j; return true;
+  }
+  clearPlugboard() { this.plug = [...Array(26).keys()]; }
+  setPlugboard(str) {
+    this.clearPlugboard();
+    (str || '').toUpperCase().split(/[^A-Z]+/).filter(Boolean).forEach(p => this.connect(p[0], p[1]));
+  }
+  randomPlugboard(n = 13) {
+    this.clearPlugboard();
+    const l = [...Array(26).keys()];
+    for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; }
+    for (let k = 0; k < n; k++) this.connect(EnigmaEngine.chr(l[2 * k]), EnigmaEngine.chr(l[2 * k + 1]));
+    return this.pairs;
+  }
+  // ---- mechanics ----
+  step() {
+    const p = this.positions, n = this.notch, stepped = [false, false, true];
+    if (n[1].includes(p[1])) {           // double-step: middle at notch steps itself and left
+      p[0] = (p[0] + 1) % 26; p[1] = (p[1] + 1) % 26; stepped[0] = stepped[1] = true;
+    } else if (n[2].includes(p[2])) {
+      p[1] = (p[1] + 1) % 26; stepped[1] = true;
+    }
+    p[2] = (p[2] + 1) % 26;
+    return stepped;
+  }
+  _pass(i, c, back) {
+    const s = (this.positions[i] - this.rings[i] + 26) % 26;
+    const contact = (c + s) % 26;
+    const exit = back ? this.bw[i][contact] : this.fw[i][contact];
+    return { rotor: this.order[i], slot: i, inChar: EnigmaEngine.chr(c), entryContact: contact,
+             wire: back ? exit : contact, exitContact: exit, out: (exit - s + 26) % 26,
+             outChar: EnigmaEngine.chr(exit - s) };
+  }
+  encryptChar(ch) {
+    const k = EnigmaEngine.idx(ch);
+    if (k < 0 || k > 25) return null;
+    const before = this.getPositionString();
+    const stepped = this.step();
+    let c = this.plug[k];
+    const plugIn = { from: EnigmaEngine.chr(k), to: EnigmaEngine.chr(c), swapped: c !== k };
+    const forward = [];
+    for (const i of [2, 1, 0]) { const r = this._pass(i, c, false); forward.push(r); c = r.out; }
+    const rin = c; c = this.reflector[c];
+    const reflector = { inChar: EnigmaEngine.chr(rin), outChar: EnigmaEngine.chr(c), in: rin, out: c };
+    const backward = [];
+    for (const i of [0, 1, 2]) { const r = this._pass(i, c, true); backward.push(r); c = r.out; }
+    const o = this.plug[c];
+    const plugOut = { from: EnigmaEngine.chr(c), to: EnigmaEngine.chr(o), swapped: o !== c };
+    return { key: EnigmaEngine.chr(k), positionsBefore: before, positionsAfter: this.getPositionString(),
+             stepped, plugIn, forward, reflector, backward, plugOut, lamp: EnigmaEngine.chr(o), output: EnigmaEngine.chr(o) };
+  }
+  encryptString(s) { return s.toUpperCase().replace(/[^A-Z]/g, '').split('').map(c => this.encryptChar(c).output).join(''); }
+}
+// END EnigmaEngine
+
+/* ============================================================
+   Web Audio
+   ============================================================ */
+class MechAudio {
+  constructor() { this.ctx = null; }
+  _c() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  }
+  _noise(dur, t0, filterType, freq, gainV, q = 1) {
+    const ctx = this._c(), len = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = filterType; f.frequency.value = freq; f.Q.value = q;
+    const g = ctx.createGain(); g.gain.value = gainV;
+    src.connect(f).connect(g).connect(ctx.destination); src.start(t0);
+  }
+  _tone(type, f0, f1, dur, t0, gainV) {
+    const ctx = this._c(), o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+    g.gain.setValueAtTime(gainV, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  key() { const t = this._c().currentTime; this._tone('sine', 140, 50, 0.12, t, 0.5); this._noise(0.08, t, 'lowpass', 900, 0.6); this._noise(0.05, t + 0.09, 'bandpass', 1800, 0.25, 3); }
+  ratchet(n = 1) { const t = this._c().currentTime; for (let i = 0; i < n; i++) { this._noise(0.025, t + i * 0.045, 'highpass', 3500, 0.5); this._tone('square', 2400, 1200, 0.02, t + i * 0.045, 0.05); } }
+  snap() { const t = this._c().currentTime; this._tone('triangle', 3200, 1500, 0.06, t, 0.25); this._noise(0.04, t, 'highpass', 5000, 0.5); }
+  clunk() { const t = this._c().currentTime; this._tone('triangle', 1900, 900, 0.09, t, 0.3); this._tone('sine', 220, 80, 0.12, t, 0.4); this._noise(0.06, t, 'bandpass', 2600, 0.7, 2); this._tone('sine', 4200, 4000, 0.25, t + 0.01, 0.04); }
+  pull() { const t = this._c().currentTime; this._noise(0.08, t, 'bandpass', 1200, 0.5, 1.5); this._tone('sine', 600, 1200, 0.08, t, 0.08); }
+}
+
+/* ============================================================
+   Procedural textures
+   ============================================================ */
+const Tex = {
+  canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; },
+  walnut() {
+    const c = this.canvas(512, 512), g = c.getContext('2d');
+    g.fillStyle = '#3b2213'; g.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 260; i++) {
+      const y = Math.random() * 512, a = 0.05 + Math.random() * 0.15;
+      g.strokeStyle = Math.random() < 0.5 ? `rgba(20,8,2,${a})` : `rgba(120,70,35,${a})`;
+      g.lineWidth = 0.5 + Math.random() * 2.5; g.beginPath();
+      for (let x = 0; x <= 512; x += 16) g.lineTo(x, y + Math.sin(x * 0.012 + i) * 6 + Math.sin(x * 0.05 + i * 3) * 1.5);
+      g.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+  },
+  crinkle() {
+    const c = this.canvas(256, 256), g = c.getContext('2d'), im = g.createImageData(256, 256);
+    for (let i = 0; i < im.data.length; i += 4) { const v = 90 + Math.random() * 120; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+    g.putImageData(im, 0, 0); g.globalAlpha = 0.35;
+    for (let i = 0; i < 1500; i++) { g.fillStyle = Math.random() < 0.5 ? '#000' : '#fff'; g.beginPath(); g.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 2.5, 0, 7); g.fill(); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 6); return t;
+  },
+  braid(color) {
+    const c = this.canvas(64, 64), g = c.getContext('2d');
+    g.fillStyle = color; g.fillRect(0, 0, 64, 64);
+    for (let i = -64; i < 128; i += 8) {
+      g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 64, 64); g.stroke();
+      g.strokeStyle = 'rgba(255,240,200,0.15)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(i + 64, 0); g.lineTo(i, 64); g.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(40, 1); t.colorSpace = THREE.SRGBColorSpace; return t;
+  },
+  _letterCache: {}, font: 'courier',
+  _draw(g, ch, style) {
+    if (style === 'parchment') {
+      const gr = g.createRadialGradient(64, 64, 10, 64, 64, 90); gr.addColorStop(0, '#f1e4bc'); gr.addColorStop(1, '#c9b27a');
+      g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(90,60,20,${Math.random() * 0.12})`; g.fillRect(Math.random() * 128, Math.random() * 128, 2, 2); }
+      g.fillStyle = '#2a1d10';
+    } else if (style === 'key') {
+      g.fillStyle = '#111'; g.fillRect(0, 0, 128, 128); g.strokeStyle = '#bfae80'; g.lineWidth = 8; g.beginPath(); g.arc(64, 64, 58, 0, 7); g.stroke(); g.fillStyle = '#f2ead2';
+    } else if (style === 'plate') {
+      g.fillStyle = '#efeadb'; g.fillRect(0, 0, 128, 128); g.strokeStyle = '#333'; g.lineWidth = 6; g.strokeRect(3, 3, 122, 122); g.fillStyle = '#111';
+    } else if (style === 'frost') {
+      const gr = g.createRadialGradient(64, 64, 8, 64, 64, 70); gr.addColorStop(0, '#d9d4c4'); gr.addColorStop(1, '#9a9585');
+      g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * 0.15})`; g.fillRect(Math.random() * 128, Math.random() * 128, 1.5, 1.5); }
+      g.fillStyle = '#1c1812'; g.strokeStyle = '#000'; g.lineWidth = 3;
+    } else if (style === 'glow') {
+      g.fillStyle = '#140c02'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#ffffff';
+      const gr = g.createRadialGradient(64, 64, 10, 64, 64, 64); gr.addColorStop(0, 'rgba(255,200,120,0.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); g.fillStyle = '#ffffff';
+    } else if (style === 'lamp') {
+      g.fillStyle = '#ece0b8'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#1a140c';
+    }
+    g.font = style !== 'parchment' ? 'bold 84px "DIN Condensed","DIN Alternate","Arial Narrow","Helvetica Neue",Arial,sans-serif' : 'bold 84px "Courier New",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 64, 70);
+  },
+  letter(ch, style = 'parchment') {
+    const key = ch + style + Tex.font; if (this._letterCache[key]) return this._letterCache[key];
+    const c = this.canvas(128, 128), g = c.getContext('2d'); this._draw(g, ch, style);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    this._letterCache[key] = t; return t;
+  },
+  // 26 letters in one 128px-cell strip: letter k occupies u in [k/26, (k+1)/26]
+  atlas(style) {
+    const key = 'atlas' + style + Tex.font; if (this._letterCache[key]) return this._letterCache[key];
+    const c = this.canvas(128 * 26, 128), g = c.getContext('2d');
+    for (let k = 0; k < 26; k++) { g.save(); g.translate(k * 128, 0); g.beginPath(); g.rect(0, 0, 128, 128); g.clip(); this._draw(g, ALPHA[k], style); g.restore(); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    this._letterCache[key] = t; return t;
+  },
+  // clone plane geometry with uvs remapped into atlas cell k
+  atlasPlane(geo, k) { const g = geo.clone(), uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, (k + uv.getX(i)) / 26); return g; }
+};
+
+const LAYOUTS = { qwerty: ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'], enigma: ['QWERTZUIO', 'ASDFGHJK', 'PYXCVBNML'] };
+let ROWS = LAYOUTS.qwerty;
+const setLayout = (name) => { ROWS = LAYOUTS[name]; };
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const layoutPos = (ch) => { for (let r = 0; r < 3; r++) { const j = ROWS[r].indexOf(ch); if (j >= 0) return { r, x: (j - (ROWS[r].length - 1) / 2) * 0.3 }; } };
+
+/* ============================================================
+   2. 3D SCENE
+   ============================================================ */
+class Enigma3DScene {
+  // Default view: user-supplied via Shift+V (distance ≈ 12.05)
+  static HOME = { pos: [-6.436, 7.456, 7.832], target: [-0.343, 0.701, -0.074] };
+  constructor(canvas, engine) {
+    this.engine = engine;
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    this.fixed = false;
+    this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.15;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.scene = new THREE.Scene(); this.scene.background = new THREE.Color(0x0b0a09); this.scene.fog = new THREE.Fog(0x0b0a09, 14, 32);
+    this.camera = new THREE.PerspectiveCamera(42, 16 / 9, 0.05, 200); this.baseFov = 42;
+    this.applySize();
+    this.camera.position.set(...Enigma3DScene.HOME.pos);
+    this.controls = new OrbitControls(this.camera, canvas);
+    this.controls.target.set(...Enigma3DScene.HOME.target); this.camera.lookAt(this.controls.target); this.controls.update(); this.controls.enableDamping = true; this.controls.maxDistance = 20; this.controls.minDistance = 1.2;
+    this.root = new THREE.Group(); this.scene.add(this.root);
+    this.updatables = [];
+    this._materials(); this._lights(); this._floor();
+    this.buildWoodenCase(); this.buildTopMetalLid(); this.buildKeyboard(); this.buildLampboard(); this.buildRotorAssembly(); this.buildPlugboard(); this.buildInternals();
+    this._limitShadowCasters();
+    this.overlays = [];
+    this.homePos = {};
+    for (const n of ['woodenCase', 'topMetalLid', 'keyboardGroup', 'lampboardGroup', 'rotorAssembly', 'plugboardGroup', 'internalsGroup']) this.homePos[n] = this[n].position.clone();
+    addEventListener('resize', () => this.applySize());
+  }
+  _limitShadowCasters() {
+    // small parts don't cast shadows (keys and big/merged parts still do)
+    this.root.traverse(o => {
+      if (!o.isMesh || !o.castShadow) return;
+      let inKeys = false; for (let p = o; p; p = p.parent) if (p === this.keyboardGroup) inKeys = true;
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+      if (!inKeys && o.geometry.boundingSphere.radius < 0.12) o.castShadow = false;
+    });
+  }
+  applySize() {
+    const w = innerWidth, h = innerHeight;
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    this.renderer.setSize(w, h);
+    this.invalidate && this.invalidate();
+    if (this.camera) {
+      const base = this.baseFov ?? 42;
+      this.camera.aspect = w / h;
+      // FIX: keep model pixel size identical to a 1920x1080 render (vertical scale by height/1080)
+      this.camera.fov = this.fixed ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(base) / 2) * h / 1080)) : base;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+  setFixed(on) { this.fixed = on; this.applySize(); }
+  // pointer -> NDC via canvas rect (correct when centered / scrolled)
+  toNDC(e, out) { const r = this.renderer.domElement.getBoundingClientRect(); return out.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); }
+  _materials() {
+    const crk = Tex.crinkle();
+    this.M = {
+      wood: new THREE.MeshStandardMaterial({ map: Tex.walnut(), roughness: 0.55, metalness: 0.05 }),
+      crinkle: new THREE.MeshStandardMaterial({ color: 0x161514, roughness: 0.75, metalness: 0.45, bumpMap: crk, bumpScale: 0.02, transparent: true }),
+      brass: new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.28, metalness: 1.0 }),
+      darkBrass: new THREE.MeshStandardMaterial({ color: 0x7a5c25, roughness: 0.4, metalness: 0.9 }),
+      steel: new THREE.MeshStandardMaterial({ color: 0x8a8a88, roughness: 0.35, metalness: 0.9 }),
+      bakelite: new THREE.MeshStandardMaterial({ color: 0x1a110c, roughness: 0.35, metalness: 0.1 }),
+      hole: new THREE.MeshStandardMaterial({ color: 0x050403, roughness: 1 }),
+      rotorShell: new THREE.MeshStandardMaterial({ color: 0x1d1a16, roughness: 0.45, metalness: 0.6, transparent: true, opacity: 1 }),
+      glass: new THREE.MeshPhysicalMaterial({ color: 0xfff6e0, roughness: 0.05, clearcoat: 1, transparent: true, opacity: 0.18, metalness: 0, depthWrite: false }),
+      hit: new THREE.MeshBasicMaterial({ visible: false }),
+      copper: new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.9, roughness: 0.35 })
+    };
+    for (const m of Object.values(this.M)) m.userData.shared = true;
+  }
+  _lights() {
+    this.scene.add(new THREE.AmbientLight(0x403528, 0.6));
+    this.scene.add(new THREE.HemisphereLight(0x6a5a40, 0x050505, 0.4));
+    const t = new THREE.PointLight(0xffb066, 60, 20, 1.6); t.position.set(-2.2, 4.2, 2.4); t.castShadow = true; t.shadow.mapSize.set(2048, 2048); t.shadow.bias = -0.0005;
+    this.scene.add(t); this.tungsten = t;
+    const rim = new THREE.DirectionalLight(0x7fa6ff, 1.4); rim.position.set(4, 2.5, -4); this.scene.add(rim);
+    const fill = new THREE.DirectionalLight(0xffd9a0, 0.5); fill.position.set(1, 3, 5); this.scene.add(fill);
+    this.lampLight = new THREE.PointLight(0xffc040, 0, 1.6, 2); this.scene.add(this.lampLight);
+    this.updatables.push((tm) => { t.intensity = 58 + Math.sin(tm * 13) * 1.2 + Math.sin(tm * 3.1) * 1.5; });
+  }
+  _floor() {
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: 0x15110d, roughness: 0.9 }));
+    f.rotation.x = -Math.PI / 2; f.position.y = -0.62; f.receiveShadow = true; this.scene.add(f); this.floor = f;
+  }
+  _box(w, h, d, mat, x, y, z, parent) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m; }
+
+  buildWoodenCase() {
+    const g = new THREE.Group(); g.name = 'WoodenCase'; this.woodenCase = g; this.root.add(g);
+    const W = 3.2, H = 1.2, D = 3.4, t = 0.08;
+    this._box(W, 0.06, D, this.M.wood, 0, -0.57, 0, g);
+    this._box(t, H, D, this.M.wood, -W / 2 + t / 2, 0, 0, g);
+    this._box(t, H, D, this.M.wood, W / 2 - t / 2, 0, 0, g);
+    this._box(W, H, t, this.M.wood, 0, 0, -D / 2 + t / 2, g);
+    this._box(W, 0.3, t, this.M.wood, 0, -0.45, D / 2 - t / 2, g);
+    // inner deck (crinkle)
+    this._box(W - 2 * t, 0.04, D - 0.2, this.M.crinkle, 0, 0.58, -0.05, g);
+    // brass corners & latches
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) this._box(0.1, H + 0.02, 0.1, this.M.darkBrass, sx * (W / 2 - 0.02), 0, sz * (D / 2 - 0.02), g);
+    for (const sx of [-1, 1]) { this._box(0.04, 0.16, 0.22, this.M.brass, sx * (W / 2 + 0.02), 0.35, 0.6, g); this._box(0.04, 0.1, 0.5, this.M.brass, sx * (W / 2 + 0.02), 0.1, -0.5, g); }
+    bakeStatic(g);
+  }
+  buildTopMetalLid() {
+    const g = new THREE.Group(); g.name = 'TopMetalLid'; this.topMetalLid = g; this.root.add(g);
+    const s = new THREE.Shape(); s.moveTo(-1.5, -0.6); s.lineTo(1.5, -0.6); s.lineTo(1.5, 0.6); s.lineTo(-1.5, 0.6); s.lineTo(-1.5, -0.6);
+    for (const x of [-0.4, 0, 0.4]) { const h = new THREE.Path(); h.moveTo(x - 0.09, -0.08); h.lineTo(x + 0.09, -0.08); h.lineTo(x + 0.09, 0.08); h.lineTo(x - 0.09, 0.08); h.lineTo(x - 0.09, -0.08); s.holes.push(h); }
+    const geo = new THREE.ExtrudeGeometry(s, { depth: 0.04, bevelEnabled: true, bevelSize: 0.01, bevelThickness: 0.01, bevelSegments: 2 });
+    const lid = new THREE.Mesh(geo, this.M.crinkle); lid.rotation.x = -Math.PI / 2; lid.castShadow = lid.receiveShadow = true; g.add(lid);
+    for (const x of [-0.4, 0, 0.4]) {
+      const fr = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.012, 6, 4), this.M.brass); fr.rotation.set(-Math.PI / 2, 0, Math.PI / 4); fr.position.set(x, 0.055, 0); fr.scale.set(1, 0.75, 1); g.add(fr);
+      const gl = new THREE.Mesh(new THREE.PlaneGeometry(0.17, 0.15), this.M.glass); gl.rotation.x = -Math.PI / 2; gl.position.set(x, 0.045, 0); g.add(gl);
+    }
+    // thumbwheel slots
+    for (const x of [-0.4, 0, 0.4]) this._box(0.06, 0.02, 0.5, this.M.hole, x + 0.17, 0.05, 0, g);
+    g.position.set(0, 1.3, -1.0);
+    this.lidMeshes = [lid];  // keeps material ref (opacity tween); geometry merged below
+    bakeStatic(g);
+  }
+  buildKeyboard() {
+    const g = new THREE.Group(); g.name = 'KeyboardGroup'; this.keyboardGroup = g; this.root.add(g);
+    g.position.set(0, 0.6, 0);
+    this.keys = {};
+    const sideGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.035, 28, 1, true), topGeo = new THREE.CircleGeometry(0.1, 28), rimGeo = new THREE.TorusGeometry(0.1, 0.012, 6, 28), stemGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.12, 8), glassGeo = new THREE.CylinderGeometry(0.095, 0.095, 0.005, 24);
+    for (const ch of ALPHA) {
+      const p = layoutPos(ch), k = new THREE.Group();
+      k.position.set(p.x, 0.12, 0.75 + p.r * 0.3);
+      const stem = new THREE.Mesh(stemGeo, this.M.steel); stem.position.y = -0.06; k.add(stem);
+      const side = new THREE.Mesh(sideGeo, this.M.bakelite); side.castShadow = true; k.add(side);
+      // top letter face: circle UV u->+X, v->+Y; rotated -90deg about X so letter top points to -Z (toward lampboard)
+      const top = new THREE.Mesh(topGeo, (k.userData.capMat = new THREE.MeshStandardMaterial({ map: Tex.letter(ch, 'key'), roughness: 0.3 }))); top.rotation.x = -Math.PI / 2; top.position.y = 0.0176; top.castShadow = true; k.add(top);
+      const rim = new THREE.Mesh(rimGeo, this.M.steel); rim.rotation.x = Math.PI / 2; k.add(rim);
+      const glass = new THREE.Mesh(glassGeo, this.M.glass); glass.position.y = 0.02; k.add(glass);
+      bakeStatic(k);
+      k.traverse(o => o.userData.key = ch);
+      g.add(k); this.keys[ch] = k;
+    }
+  }
+  buildLampboard() {
+    const g = new THREE.Group(); g.name = 'LampboardGroup'; this.lampboardGroup = g; this.root.add(g);
+    g.position.set(0, 0.6, 0);
+    this.lamps = {};
+    const discGeo = new THREE.CircleGeometry(0.088, 32), bulbGeo = new THREE.SphereGeometry(0.04, 12, 8);
+    for (const ch of ALPHA) {
+      const p = layoutPos(ch), L = new THREE.Group(); L.position.set(p.x, 0.07, -0.35 + p.r * 0.3);
+      const mat = new THREE.MeshStandardMaterial({ map: Tex.letter(ch, 'frost'), emissive: 0xffb848, emissiveMap: Tex.letter(ch, 'glow'), emissiveIntensity: 0, roughness: 0.85 });
+      const disc = new THREE.Mesh(discGeo, mat); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.014; L.add(disc);
+      const bulbMat = new THREE.MeshStandardMaterial({ color: 0x8a7a50, emissive: 0xffa020, emissiveIntensity: 0, roughness: 0.4 });
+      const bulb = new THREE.Mesh(bulbGeo, bulbMat); bulb.position.y = -0.04; L.add(bulb);
+      g.add(L); this.lamps[ch] = { group: L, mat, bulbMat };
+    }
+    this._lampStatics();
+  }
+  _lampStatics() {
+    const g = this.lampboardGroup;
+    if (this.lampStatic) { g.remove(this.lampStatic); disposeTree(this.lampStatic); }
+    const t = new THREE.Group(); g.add(t);
+    this._box(2.9, 0.04, 1.0, this.M.crinkle, 0, 0.04, -0.05, t);
+    const ringGeo = new THREE.TorusGeometry(0.1, 0.015, 6, 28), holeGeo = new THREE.CylinderGeometry(0.098, 0.098, 0.01, 28), winGeo = new THREE.TorusGeometry(0.09, 0.008, 6, 32);
+    for (const ch of ALPHA) {
+      const p = layoutPos(ch), x = p.x, y = 0.07, z = -0.35 + p.r * 0.3;
+      const ring = new THREE.Mesh(ringGeo, this.M.darkBrass); ring.rotation.x = Math.PI / 2; ring.position.set(x, y, z); t.add(ring);
+      const hole = new THREE.Mesh(holeGeo, this.M.hole); hole.position.set(x, y, z); t.add(hole);
+      const win = new THREE.Mesh(winGeo, this.M.brass); win.rotation.x = Math.PI / 2; win.position.set(x, y + 0.016, z); t.add(win);
+    }
+    bakeStatic(t); this.lampStatic = t;
+  }
+  _letterRing(parent, radius, width, x) {
+    const step = Math.PI * 2 / 26;
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(radius - 0.003, radius - 0.003, width, 52, 1, true), this.M.ringBand || (this.M.ringBand = Object.assign(new THREE.MeshStandardMaterial({ color: 0xd9c89a, roughness: 0.7, side: THREE.DoubleSide }), { userData: { shared: true } })));
+    band.rotation.z = Math.PI / 2; band.position.x = x; parent.add(band);
+    const base = new THREE.PlaneGeometry(width * 0.9, radius * step * 0.95), o = new THREE.Object3D(), parts = [];
+    for (let k = 0; k < 26; k++) {
+      const a = k * step; o.position.set(x, radius * Math.cos(a), radius * Math.sin(a)); o.rotation.set(a - Math.PI / 2, 0, 0, 'XYZ'); o.updateMatrix();
+      parts.push(Tex.atlasPlane(base, k).applyMatrix4(o.matrix));
+    }
+    if (!this.M.ringLetters) this.M.ringLetters = Object.assign(new THREE.MeshStandardMaterial({ map: Tex.atlas('parchment'), roughness: 0.8 }), { userData: { shared: true } });
+    parent.add(new THREE.Mesh(mergeGeometries(parts), this.M.ringLetters)); parts.forEach(p => p.dispose()); base.dispose();
+  }
+  _contactPoint(k, r, x) { const a = k * Math.PI * 2 / 26; return new THREE.Vector3(x, r * Math.cos(a), r * Math.sin(a)); }
+  _buildRotorWires(rotor, wiring) {
+    if (rotor.wires) { rotor.spin.remove(rotor.wires); disposeTree(rotor.wires); }
+    rotor.wireCurves = []; const geos = [];
+    for (let i = 0; i < 26; i++) {
+      const w = wiring[i];
+      const a = this._contactPoint(i, 0.22, 0.12), d = this._contactPoint(w, 0.22, -0.12);
+      const b = this._contactPoint(i, 0.13, 0.05), c = this._contactPoint(w, 0.13, -0.05);
+      const curve = new THREE.CatmullRomCurve3([a, b, c, d]); rotor.wireCurves.push(curve);
+      geos.push(new THREE.TubeGeometry(curve, 10, 0.006, 3, false));
+    }
+    rotor.wires = new THREE.Mesh(mergeGeometries(geos), this.M.copper); geos.forEach(g => g.dispose());
+    rotor.spin.add(rotor.wires);
+  }
+  _buildRotor(name, x) {
+    // spin = wiring core (wires, contacts, body, ratchet, thumbwheel); ring = alphabet tyre + notch
+    const R = { group: new THREE.Group(), spin: new THREE.Group(), ring: new THREE.Group(), name };
+    R.group.position.x = x; R.group.add(R.spin); R.group.add(R.ring);
+    const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 52, 1, true), this.M.rotorShell.clone()); shell.rotation.z = Math.PI / 2; shell.castShadow = true; shell.userData.noBake = true; R.spin.add(shell); R.shell = shell;
+    for (const sx of [-1, 1]) {
+      const face = new THREE.Mesh(new THREE.RingGeometry(0.04, 0.3, 52), this.M.rotorShell.clone()); face.material.side = THREE.DoubleSide;
+      face.rotation.y = Math.PI / 2; face.position.x = sx * 0.1; face.userData.noBake = true; R.spin.add(face); (R.faces = R.faces || []).push(face);
+    }
+    this._letterRing(R.ring, 0.322, 0.08, 0.045);
+    // notch tab on the alphabet ring (I-III: notch is part of the ring)
+    R.notchPivot = new THREE.Group(); R.notchPivot.userData.noBake = true; R.ring.add(R.notchPivot);
+    this._setNotch(R, name);
+    // 26-tooth ratchet
+    const ratchet = new THREE.Group();
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.03, 52), this.M.brass); disc.rotation.z = Math.PI / 2; ratchet.add(disc);
+    const toothGeo = new THREE.BoxGeometry(0.03, 0.04, 0.035);
+    for (let k = 0; k < 26; k++) { const a = (k + 0.5) * Math.PI * 2 / 26, t = new THREE.Mesh(toothGeo, this.M.brass); t.position.set(0, 0.3 * Math.cos(a), 0.3 * Math.sin(a)); t.rotation.x = a + 0.4; ratchet.add(t); }
+    ratchet.position.x = -0.12; R.spin.add(ratchet);
+    // thumbwheel
+    const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.03, 40), this.M.bakelite); tw.rotation.z = Math.PI / 2; tw.position.x = 0.13; R.spin.add(tw);
+    for (let k = 0; k < 40; k++) { const a = k * Math.PI * 2 / 40, n = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.015, 0.02), this.M.bakelite); n.position.set(0.13, 0.345 * Math.cos(a), 0.345 * Math.sin(a)); n.rotation.x = a; R.spin.add(n); }
+    // contact pins (right face) & spring contacts (left face)
+    const pinGeo = new THREE.CylinderGeometry(0.009, 0.009, 0.03, 8), springGeo = new THREE.SphereGeometry(0.011, 8, 6);
+    for (let k = 0; k < 26; k++) {
+      const p = this._contactPoint(k, 0.22, 0.115), pin = new THREE.Mesh(pinGeo, this.M.brass); pin.position.copy(p); pin.rotation.z = Math.PI / 2; R.spin.add(pin);
+      const s = this._contactPoint(k, 0.22, -0.115), sp = new THREE.Mesh(springGeo, this.M.brass); sp.position.copy(s); R.spin.add(sp);
+    }
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16), this.M.steel); hub.rotation.z = Math.PI / 2; R.spin.add(hub);
+    bakeStatic(R.spin); bakeStatic(R.ring);
+    const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.3, 24), this.M.hit); hit.rotation.z = Math.PI / 2; hit.userData.rotorSlot = -1; R.group.add(hit); R.hit = hit;
+    return R;
+  }
+  buildRotorAssembly() {
+    const g = new THREE.Group(); g.name = 'RotorAssembly'; this.rotorAssembly = g; this.root.add(g);
+    g.position.set(0, 0.97, -1.0);
+    // axle
+    const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.4, 12), this.M.steel); axle.rotation.z = Math.PI / 2; g.add(axle);
+    this.rotorX = [-0.4, 0, 0.4]; this.reflX = -0.85;
+    this.rotors = this.engine.order.map((n, i) => {
+      const R = this._buildRotor(n, this.rotorX[i]); R.hit.userData.rotorSlot = i; g.add(R.group);
+      this._buildRotorWires(R, this.engine.fw[i]); return R;
+    });
+    // reflector B
+    const RF = { group: new THREE.Group(), wireMeshes: [] }; RF.group.position.x = this.reflX; g.add(RF.group);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 52, 1, true), this.M.rotorShell.clone()); body.rotation.z = Math.PI / 2; RF.group.add(body); RF.shell = body;
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(0.3, 52), this.M.rotorShell.clone()); cap.rotation.y = -Math.PI / 2; cap.position.x = -0.08; RF.group.add(cap); RF.faces = [cap];
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.02, 52), this.M.darkBrass); plate.rotation.z = Math.PI / 2; plate.position.x = -0.085; RF.group.add(plate);
+    this.reflectorObj = RF; this.buildReflectorWires();
+
+    // entry wheel (ETW)
+    const etw = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.08, 40), this.M.darkBrass); etw.rotation.z = Math.PI / 2; etw.position.x = 0.75; g.add(etw); this.etw = etw;
+    { const cg = new THREE.CylinderGeometry(0.01, 0.01, 0.1, 6); for (let k = 0; k < 26; k++) { const p = this._contactPoint(k, 0.2, 0), c = new THREE.Mesh(cg, this.M.brass); c.position.set(p.y, p.z, 0); etw.add(c); } bakeStatic(etw); }
+    for (const x of [-1.1, 1.0]) this._box(0.06, 0.5, 0.4, this.M.crinkle, x, -0.2, 0, g);
+    this.syncRotors(true);
+  }
+  buildReflectorWires() {
+    const RF = this.reflectorObj;
+    if (RF.wires) { RF.group.remove(RF.wires); disposeTree(RF.wires); }
+    RF.wires = new THREE.Group(); RF.group.add(RF.wires); RF.wireCurves = [];
+    const refl = this.engine.reflector, wg = [], pg = [], pin = new THREE.SphereGeometry(0.011, 8, 6);
+    for (let i = 0; i < 26; i++) {
+      const j = refl[i]; if (j < i) { RF.wireCurves[i] = RF.wireCurves[j]; continue; }
+      const a = this._contactPoint(i, 0.22, 0.07), d = this._contactPoint(j, 0.22, 0.07);
+      const m1 = this._contactPoint(i, 0.12, -0.04), m2 = this._contactPoint(j, 0.12, -0.04);
+      const curve = new THREE.CatmullRomCurve3([a, m1, m2, d]); RF.wireCurves[i] = curve;
+      wg.push(new THREE.TubeGeometry(curve, 12, 0.006, 3, false));
+      for (const p of [a, d]) pg.push(pin.clone().translate(p.x, p.y, p.z));
+    }
+    RF.wires.add(new THREE.Mesh(mergeGeometries(wg), this.M.copper), new THREE.Mesh(mergeGeometries(pg), this.M.brass));
+    [...wg, ...pg, pin].forEach(g => g.dispose());
+  }
+  _setNotch(R, name) {
+    // one brass tab per notch letter (VI-VIII have two: Z and M), each at its letter's angle on the ring
+    while (R.notchPivot.children.length) R.notchPivot.remove(R.notchPivot.children[0]);  // geometries below are shared, nothing to dispose
+    this._notchTabGeo = this._notchTabGeo || new THREE.BoxGeometry(0.03, 0.03, 0.045); this._notchCutGeo = this._notchCutGeo || new THREE.BoxGeometry(0.032, 0.012, 0.02);
+    for (const ch of EnigmaEngine.ROTORS[name].notch) {
+      const piv = new THREE.Group(); piv.rotation.x = EnigmaEngine.idx(ch) * Math.PI * 2 / 26; R.notchPivot.add(piv);
+      const tab = new THREE.Mesh(this._notchTabGeo, this.M.brass); tab.position.set(-0.012, 0.338, 0); piv.add(tab);
+      const cut = new THREE.Mesh(this._notchCutGeo, this.M.hole); cut.position.set(-0.012, 0.354, 0); piv.add(cut);
+    }
+  }
+  setRotorWiring(slot) { const R = this.rotors[slot]; R.name = this.engine.order[slot]; this._buildRotorWires(R, this.engine.fw[slot]); this._setNotch(R, R.name); }
+  syncRotors(instant = false) {
+    // Ring (window letter) angle = -position; core angle = -(position - ringSetting).
+    // Core contact k then sits at fixed-frame position k - (pos - ring), matching engine shift s = pos - ring,
+    // so wire index (core-relative) used in the signal path stays correct.
+    const step = Math.PI * 2 / 26;
+    const TAU = Math.PI * 2, norm = (d) => ((d + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    const dur = (d) => 0.18 + Math.min(Math.abs(d), 1.5) * 0.25;
+    this.rotors.forEach((R, i) => {
+      const p = this.engine.positions[i], r = this.engine.rings[i];
+      // Ring and core get the SAME position delta (rotor turns as one piece); the core additionally
+      // gets only the correction needed so that (core - ring) == ringSetting steps exactly.
+      const ringCur = R.ring.rotation.x, coreCur = R.spin.rotation.x;
+      const dRing = norm(-p * step - ringCur);
+      const ringEnd = ringCur + dRing;
+      const dOff = norm((ringEnd + r * step) - (coreCur + dRing));
+      const coreEnd = coreCur + dRing + dOff;
+      gsap.killTweensOf(R.ring.rotation); gsap.killTweensOf(R.spin.rotation);
+      if (instant) { R.ring.rotation.x = ringEnd; R.spin.rotation.x = coreEnd; return; }
+      if (Math.abs(dRing) > 1e-4) gsap.to(R.ring.rotation, { x: ringEnd, duration: dur(dRing), ease: 'back.out(2)' });
+      if (Math.abs(dRing + dOff) > 1e-4) gsap.to(R.spin.rotation, { x: coreEnd, duration: dur(Math.abs(dRing) > 1e-4 ? dRing : dOff), ease: 'back.out(2)' });
+    });
+  }
+  buildPlugboard() {
+    const g = new THREE.Group(); g.name = 'PlugboardGroup'; this.plugboardGroup = g; this.root.add(g);
+    g.position.set(0, -0.15, 1.7);
+    const fixed = new THREE.Group(); g.add(fixed);
+    const panel = this._box(3.1, 0.96, 0.05, this.M.crinkle, 0, 0.0, -0.025, fixed); panel.receiveShadow = true;
+    this._box(3.2, 0.06, 0.08, this.M.wood, 0, 0.5, 0, fixed); this._box(3.2, 0.06, 0.08, this.M.wood, 0, -0.5, 0, fixed);
+    const lc = Tex.canvas(512, 64), lg = lc.getContext('2d'); lg.fillStyle = '#b8954a'; lg.fillRect(0, 0, 512, 64); lg.fillStyle = '#2a1d0c'; lg.font = 'bold 34px Courier New'; lg.textAlign = 'center'; lg.fillText('STECKERBRETT', 256, 44);
+    const lt = new THREE.CanvasTexture(lc); lt.colorSpace = THREE.SRGBColorSpace;
+    const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.088), new THREE.MeshStandardMaterial({ map: lt, metalness: 0.7, roughness: 0.4 })); lab.position.set(0, 0.42, 0.003); fixed.add(lab);
+    bakeStatic(fixed);
+    this.sockets = {};
+    const ringGeo = new THREE.TorusGeometry(0.1, 0.012, 6, 32), hitGeo = new THREE.BoxGeometry(0.24, 0.26, 0.12);
+    for (const ch of ALPHA) {
+      const p = layoutPos(ch), y = 0.27 - p.r * 0.3, s = new THREE.Group(); s.position.set(p.x, y - 0.03, 0);
+      const glow = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xffa530, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); glow.position.z = 0.03; glow.visible = false; s.add(glow);
+      const hit = new THREE.Mesh(hitGeo, this.M.hit); hit.position.y = 0.03; hit.userData.socket = ch; s.add(hit);
+      g.add(s); this.sockets[ch] = { group: s, glow, hit, pos: s.position.clone() };
+    }
+    this._socketStatics();
+  }
+  _socketStatics() {
+    // brass sockets + holes + letter plates (atlas) for all 26 letters merged into 3 meshes; rebuilt on relayout
+    const g = this.plugboardGroup;
+    if (this.socketStatic) { g.remove(this.socketStatic); disposeTree(this.socketStatic); }
+    const t = new THREE.Group(); g.add(t);
+    const sockGeo = new THREE.CylinderGeometry(0.075, 0.075, 0.02, 28), holeGeo = new THREE.CylinderGeometry(0.014, 0.014, 0.022, 10), plateGeo = new THREE.PlaneGeometry(0.075, 0.06);
+    const plates = [];
+    for (const ch of ALPHA) {
+      const P = this.sockets[ch].pos;
+      const base = new THREE.Mesh(sockGeo, this.M.brass); base.rotation.x = Math.PI / 2; base.position.set(P.x, P.y, 0.01); base.castShadow = true; t.add(base);
+      for (const hx of [-0.026, 0.026]) { const h = new THREE.Mesh(holeGeo, this.M.hole); h.rotation.x = Math.PI / 2; h.position.set(P.x + hx, P.y, 0.012); t.add(h); }
+      plates.push(Tex.atlasPlane(plateGeo, ch.charCodeAt(0) - 65).translate(P.x, P.y + 0.115, 0.004));
+    }
+    bakeStatic(t);
+    if (!this.M.plates) this.M.plates = Object.assign(new THREE.MeshStandardMaterial({ map: Tex.atlas('plate'), roughness: 0.6 }), { userData: { shared: true } });
+    t.add(new THREE.Mesh(mergeGeometries(plates), this.M.plates)); plates.forEach(p => p.dispose()); plateGeo.dispose();
+    this.socketStatic = t;
+  }
+
+  buildInternals() {
+    const g = new THREE.Group(); g.name = 'InternalsGroup'; this.internalsGroup = g; this.root.add(g);
+    const M = this.M, B = (w, h, d, m, x, y, z) => this._box(w, h, d, m, x, y, z, g);
+    // chassis
+    B(2.9, 0.03, 3.1, M.darkBrass, 0, -0.5, 0);
+    for (const x of [-1.3, 1.3]) for (const z of [-1.3, 1.3]) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.05, 8), M.steel); c.position.set(x, 0.03, z); g.add(c); }
+    B(2.8, 0.03, 0.9, M.steel, 0, 0.32, 0.95);  // key switch rail
+    B(2.8, 0.03, 0.9, M.steel, 0, 0.42, -0.05); // lamp socket rail
+    // spindle supports & reflector mount
+    for (const x of [-1.1, 1.0]) B(0.05, 0.9, 0.08, M.steel, x, 0.15, -1.0);
+    B(0.12, 0.25, 0.3, M.brass, -0.85, 0.5, -1.0);
+    const spindle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 2.3, 8), M.steel); spindle.rotation.z = Math.PI / 2; spindle.position.set(0, 0.5, -1.0); g.add(spindle);
+    // stepping pawls & lever under rotors
+    const helix = (r, h, turns) => { const pts = []; for (let i = 0; i <= turns * 10; i++) { const t = i / (turns * 10), a = t * turns * Math.PI * 2; pts.push(new THREE.Vector3(r * Math.cos(a), t * h, r * Math.sin(a))); } return new THREE.CatmullRomCurve3(pts); };
+    const springGeo = new THREE.TubeGeometry(helix(0.018, 0.1, 6), 60, 0.003, 4, false);
+    for (const x of [-0.25, 0.15, 0.55]) {
+      const pawl = B(0.03, 0.3, 0.04, M.brass, x, 0.42, -0.72); pawl.rotation.x = -0.35;
+      const tip = B(0.04, 0.04, 0.08, M.brass, x, 0.56, -0.8);
+      const sp = new THREE.Mesh(springGeo, M.steel); sp.position.set(x + 0.05, 0.3, -0.7); g.add(sp);
+    }
+    B(1.0, 0.03, 0.05, M.steel, 0.15, 0.27, -0.68);            // pawl cross-bar
+    B(0.04, 0.04, 1.9, M.steel, 0.15, 0.27, 0.25);             // main lever from keys to pawls
+    const piv = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.12, 12), M.brass); piv.rotation.z = Math.PI / 2; piv.position.set(0.15, 0.27, 0.3); g.add(piv);
+    // battery box (4.5V flat battery)
+    B(0.5, 0.3, 0.7, new THREE.MeshStandardMaterial({ color: 0x3a3226, roughness: 0.8 }), -1.05, -0.33, 0.05);
+    const bat = B(0.42, 0.22, 0.6, new THREE.MeshStandardMaterial({ color: 0x5a2a18, roughness: 0.6 }), -1.05, -0.12, 0.05);
+    for (const dz of [-0.12, 0.12]) { B(0.04, 0.08, 0.02, M.brass, -1.05 + 0.1, 0.02, 0.05 + dz); B(0.12, 0.01, 0.02, M.brass, -1.05 + 0.16, 0.06, 0.05 + dz); }
+    // lamp sockets & key contacts
+    const lsGeo = new THREE.CylinderGeometry(0.035, 0.03, 0.12, 10), kcGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.02, 10), ksGeo = new THREE.TubeGeometry(helix(0.02, 0.14, 5), 40, 0.003, 4, false);
+    this.harness = { key: {}, etw: {}, lamp: {} };
+    const hm = this.M.harness || (this.M.harness = {});
+    const wireMat = (c) => hm[c] || (hm[c] = Object.assign(new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 }), { userData: { shared: true } }));
+    const tube = (pts, m) => { const curve = new THREE.CatmullRomCurve3(pts); const t = new THREE.Mesh(new THREE.TubeGeometry(curve, 12, 0.006, 3, false), m); g.add(t); return curve; };
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const etwP = (k) => { const p = this._contactPoint(k, 0.2, 0); return V(0.85, 0.97 + p.y, -1.0 + p.z); };
+    for (const ch of ALPHA) {
+      const p = layoutPos(ch), lz = -0.35 + p.r * 0.3, kz = 0.75 + p.r * 0.3, sy = -0.15 + 0.24 - p.r * 0.3, k = ch.charCodeAt(0) - 65;
+      const ls = new THREE.Mesh(lsGeo, M.brass); ls.position.set(p.x, 0.5, lz); g.add(ls);
+      const kc = new THREE.Mesh(kcGeo, M.brass); kc.position.set(p.x, 0.345, kz); g.add(kc);
+      const ks = new THREE.Mesh(ksGeo, M.steel); ks.position.set(p.x, 0.36, kz); g.add(ks);
+      // key contact -> plugboard socket
+      this.harness.key[ch] = tube([V(p.x, 0.33, kz), V(p.x * 0.9, 0.1, kz + 0.2), V(p.x, sy + 0.05, 1.5), V(p.x, sy, 1.64)], wireMat(0x6a5a3a));
+      // plugboard socket -> ETW (trunk along right side)
+      this.harness.etw[ch] = tube([V(p.x, sy - 0.02, 1.64), V(p.x * 0.5 + 0.6, -0.35, 1.3), V(1.35, -0.3 + k * 0.004, 0.2), V(1.3, 0.5, -0.9), etwP(k)], wireMat(0x3a3a2a));
+      // ETW region -> lamp socket
+      this.harness.lamp[ch] = tube([V(1.25, 0.6, -0.8), V(1.1, 0.4, -0.55 + k * 0.004), V(p.x, 0.4, lz), V(p.x, 0.45, lz)], wireMat(0x5a2a1a));
+    }
+    bakeStatic(g);
+  }
+  // on-demand glow overlay (a slightly thicker emissive tube) for one wire; base wires stay merged
+  _overlay(parent, curve, color, emissive, delay, radius = 0.0078) {
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 16, radius, 4, false), new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity: 0, metalness: 0.6, roughness: 0.4 }));
+    m.visible = false; parent.add(m); this.overlays.push(m);
+    gsap.timeline({ delay }).set(m, { visible: true }).to(m.material, { emissiveIntensity: 4, duration: 0.08 })
+      .to(m.material, { emissiveIntensity: 0, duration: 1.2, delay: 0.9, onComplete: () => this._dropOverlay(m) });
+  }
+  _dropOverlay(m) { gsap.killTweensOf(m); gsap.killTweensOf(m.material); if (m.parent) m.parent.remove(m); m.geometry.dispose(); m.material.dispose(); const i = this.overlays.indexOf(m); if (i >= 0) this.overlays.splice(i, 1); }
+  clearOverlays() { [...this.overlays].forEach(m => this._dropOverlay(m)); }
+  glowHarness(path) {
+    const H = this.harness; if (!H) return;
+    const g = this.internalsGroup, lit = (c, d) => c && this._overlay(g, c, 0xffcc88, 0xffaa33, d, 0.008);
+    lit(H.key[path.key], 0); lit(H.etw[path.plugIn.to], 0.05); lit(H.etw[path.plugOut.from], 0.3); lit(H.lamp[path.lamp], 0.35);
+  }
+  relayout() {
+    const set = (m, tex, key) => { m[key] = tex; m.needsUpdate = true; };
+    for (const ch of ALPHA) {
+      const p = layoutPos(ch), k = this.keys[ch];
+      k.position.set(p.x, 0.12, 0.75 + p.r * 0.3); set(k.userData.capMat, Tex.letter(ch, 'key'), 'map');
+      const L = this.lamps[ch]; L.group.position.set(p.x, 0.07, -0.35 + p.r * 0.3);
+      set(L.mat, Tex.letter(ch, 'frost'), 'map'); set(L.mat, Tex.letter(ch, 'glow'), 'emissiveMap');
+      const S = this.sockets[ch]; S.group.position.set(p.x, 0.27 - p.r * 0.3 - 0.03, 0); S.pos.copy(S.group.position);
+    }
+    this._lampStatics(); this._socketStatics(); this.clearOverlays();
+    // rebuild internal harness for the new layout, preserving current (possibly exploded) offset
+    const old = this.internalsGroup, op = old.position.clone();
+    this.root.remove(old); disposeTree(old, true);
+    this.buildInternals(); this.internalsGroup.position.copy(op);
+    this._limitShadowCasters(); this.invalidate && this.invalidate();
+  }
+  // ---- feedback ----
+  pressKey(ch) {
+    const k = this.keys[ch]; if (!k) return;
+    gsap.killTweensOf(k.position); k.position.y = 0.12;
+    gsap.timeline().to(k.position, { y: 0.06, duration: 0.07, ease: 'power2.in' }).to(k.position, { y: 0.12, duration: 0.22, ease: 'back.out(2)' });
+  }
+  lightLamp(ch) {
+    for (const c in this.lamps) { const L = this.lamps[c]; gsap.killTweensOf(L.mat); gsap.killTweensOf(L.bulbMat); L.mat.emissiveIntensity = 0; L.bulbMat.emissiveIntensity = 0; }
+    const L = this.lamps[ch]; if (!L) return;
+    L.group.getWorldPosition(this.lampLight.position); this.lampLight.position.y += 0.15;
+    gsap.killTweensOf(this.lampLight);
+    L.mat.emissiveIntensity = 2.2; L.bulbMat.emissiveIntensity = 3; this.lampLight.intensity = 3.5;
+    gsap.timeline().to(this.lampLight, { intensity: 1.5, duration: 0.05, yoyo: true, repeat: 3 }).to(this.lampLight, { intensity: 2.5, duration: 0.05 });
+    gsap.to([L.mat], { emissiveIntensity: 0, duration: 0.7, delay: 0.9 });
+    gsap.to([L.bulbMat], { emissiveIntensity: 0, duration: 0.7, delay: 0.9 });
+    gsap.to(this.lampLight, { intensity: 0, duration: 0.7, delay: 1.0 });
+  }
+  showSignalPath(path) {
+    this.clearOverlays();
+    path.forward.forEach((f, n) => { const R = this.rotors[f.slot]; this._overlay(R.spin, R.wireCurves[f.wire], 0xffaa55, 0xff6a10, n * 0.05); });
+    const RF = this.reflectorObj; this._overlay(RF.group, RF.wireCurves[path.reflector.in], 0xff8866, 0xff2a10, 0.15);
+    path.backward.forEach((b, n) => { const R = this.rotors[b.slot]; this._overlay(R.spin, R.wireCurves[b.wire], 0x99ccff, 0x30a0ff, 0.2 + n * 0.05); });
+  }
+  setExploded(on) {
+    const d = 1.1, e = 'power3.inOut', H = this.homePos;
+    const tw = (o, p) => gsap.to(o.position, { x: p.x, y: p.y, z: p.z, duration: d, ease: e });
+    if (on) {
+      tw(this.topMetalLid, { x: 0, y: H.topMetalLid.y + 1.3, z: H.topMetalLid.z - 0.5 }); gsap.to(this.topMetalLid.rotation, { x: -0.5, duration: d, ease: e });
+      this.lidMeshes.forEach(m => gsap.to(m.material, { opacity: 0.25, duration: d }));
+      tw(this.woodenCase, { x: 0, y: -0.5, z: 0 }); gsap.to(this.floor.position, { y: -0.62 - 0.5, duration: d, ease: e }); // floor sinks with case
+      tw(this.keyboardGroup, { x: 0, y: H.keyboardGroup.y + 0.15, z: H.keyboardGroup.z + 0.8 });
+      tw(this.lampboardGroup, { x: 0, y: H.lampboardGroup.y + 0.5, z: H.lampboardGroup.z + 0.2 });
+      tw(this.plugboardGroup, { x: 0, y: H.plugboardGroup.y + 0.25, z: H.plugboardGroup.z + 1.7 });
+      tw(this.rotorAssembly, { x: 0, y: H.rotorAssembly.y + 0.9, z: H.rotorAssembly.z - 0.3 });
+      this.rotors.forEach((R, i) => gsap.to(R.group.position, { x: this.rotorX[i] * 2.6, duration: d, ease: e }));
+      gsap.to(this.reflectorObj.group.position, { x: this.reflX * 2.0, duration: d, ease: e }); gsap.to(this.etw.position, { x: 1.6, duration: d, ease: e });
+      tw(this.internalsGroup, { x: 0, y: H.internalsGroup.y + 0.6, z: 0 });
+      this._shellOpacity(0.12);
+    } else {
+      for (const n in H) tw(this[n], H[n]);
+      gsap.to(this.floor.position, { y: -0.62, duration: d, ease: e });
+      gsap.to(this.topMetalLid.rotation, { x: 0, duration: d, ease: e });
+      this.lidMeshes.forEach(m => gsap.to(m.material, { opacity: 1, duration: d }));
+      this.rotors.forEach((R, i) => gsap.to(R.group.position, { x: this.rotorX[i], duration: d, ease: e }));
+      gsap.to(this.reflectorObj.group.position, { x: this.reflX, duration: d, ease: e }); gsap.to(this.etw.position, { x: 0.75, duration: d, ease: e });
+      this._shellOpacity(1);
+    }
+  }
+  _shellOpacity(o) {
+    const mats = [];
+    [...this.rotors, this.reflectorObj].forEach(R => { mats.push(R.shell.material, ...R.faces.map(f => f.material)); });
+    mats.forEach(m => { m.depthWrite = o > 0.9; gsap.to(m, { opacity: o, duration: 1.0 }); });
+  }
+  flyCamera(pos, target, lockRotate) {
+    this.controls.enableRotate = !lockRotate;
+    gsap.to(this.camera.position, { ...pos, duration: 1.3, ease: 'power3.inOut' });
+    gsap.to(this.controls.target, { ...target, duration: 1.3, ease: 'power3.inOut' });
+  }
+  start() {
+    // render-on-demand: draw only while camera/tweens/drag/etc. change; idle otherwise; paused when tab hidden
+    this._frames = 2;
+    this.invalidate = () => { this._frames = Math.max(this._frames, 3); };
+    this.controls.addEventListener('change', this.invalidate);
+    for (const ev of ['pointermove', 'pointerdown', 'pointerup', 'wheel', 'keydown', 'resize']) addEventListener(ev, this.invalidate, { passive: true });
+    document.addEventListener('visibilitychange', this.invalidate);
+    const clock = new THREE.Clock(), tl = gsap.globalTimeline;
+    const tweening = () => { for (let c = tl._first; c; c = c._next) if (c.isActive()) return true; return false; };
+    const loop = () => {
+      requestAnimationFrame(loop);
+      if (document.hidden) return;
+      const t = clock.getElapsedTime();
+      const moved = this.controls.update();
+      if (!(moved || this._frames > 0 || tweening())) return;
+      if (this._frames > 0) this._frames--;
+      this.updatables.forEach(f => f(t));
+      this.renderer.shadowMap.needsUpdate = true;
+      this.renderer.render(this.scene, this.camera);
+      this.renderCount = (this.renderCount || 0) + 1;
+    };
+    loop();
+  }
+}
+
+/* ============================================================
+   3. PLUGBOARD INTERACTION (13 patch cables)
+   ============================================================ */
+class PatchCable {
+  constructor(id, color, scene3d) {
+    this.color = color;
+    this.id = id; this.a = null; this.b = null; this.s = scene3d;
+    this.group = new THREE.Group(); this.group.visible = false;
+    this.mat = new THREE.MeshStandardMaterial({ map: Tex.braid(color), color: 0xffffff, roughness: 0.85, emissive: new THREE.Color(color).multiplyScalar(1.6), emissiveIntensity: 0 });
+    this.plugA = this._plug(color, 'a'); this.plugB = this._plug(color, 'b');
+    this.group.add(this.plugA, this.plugB);
+    this.tube = new THREE.Mesh(new THREE.BufferGeometry(), this.mat); this.tube.castShadow = true; this.group.add(this.tube);
+    this._last = '';
+  }
+  _plug(color, end) {
+    const p = new THREE.Group(), M = this.s.M;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.058, 0.12, 20), M.bakelite); body.rotation.x = Math.PI / 2; body.position.z = 0.04; body.castShadow = true; p.add(body);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 20), new THREE.MeshStandardMaterial({ color, roughness: 0.5 })); band.rotation.x = Math.PI / 2; band.position.z = 0.07; p.add(band);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.018, 20), M.brass); collar.rotation.x = Math.PI / 2; collar.position.z = -0.02; p.add(collar);
+    const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.035, 0.05, 12), M.bakelite); boot.rotation.x = Math.PI / 2; boot.position.z = 0.12; p.add(boot);
+    for (const hx of [-0.026, 0.026]) { const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.009, 0.09, 8), M.brass); pin.rotation.x = Math.PI / 2; pin.position.set(hx, 0, -0.07); p.add(pin); }
+    bakeStatic(p);
+    p.traverse(o => { o.userData.cable = this; o.userData.end = end; });
+    return p;
+  }
+  plug(end) { return end === 'a' ? this.plugA : this.plugB; }
+  rebuild() {
+    if (!this.group.visible) return;
+    const A = this.plugA.position, B = this.plugB.position, g0 = this.s.plugboardGroup.position.y, f0 = this.s.floor.position.y;
+    const L = this._lp || (this._lp = new Float64Array(8).fill(NaN));
+    if (this._last !== '' && L[0] === A.x && L[1] === A.y && L[2] === A.z && L[3] === B.x && L[4] === B.y && L[5] === B.z && L[6] === g0 && L[7] === f0) return;
+    L[0] = A.x; L[1] = A.y; L[2] = A.z; L[3] = B.x; L[4] = B.y; L[5] = B.z; L[6] = g0; L[7] = f0; this._last = 'ok';
+    const p0 = A.clone().add(new THREE.Vector3(0, 0, 0.14)), p3 = B.clone().add(new THREE.Vector3(0, 0, 0.14));
+    const dist = p0.distanceTo(p3), sag = Math.min(0.35 * dist, 0.22), bow = 0.3 + Math.min(dist * 0.18, 0.25);
+    // floor/table & panel limits in plugboard-local space
+    const g = this.s.plugboardGroup, floorLocal = this.s.floor.position.y - g.position.y;
+    let minY = Math.max(floorLocal + 0.04, -0.48 - 0.04);
+    minY = Math.min(minY, p0.y, p3.y);           // never force endpoints (e.g. fly-in start) to move
+    const minZ = 0.06;
+    const clampV = (v) => { v.y = Math.max(v.y, minY); v.z = Math.max(v.z, minZ); return v; };
+    const c1 = clampV(p0.clone().add(new THREE.Vector3(0, -sag, bow))), c2 = clampV(p3.clone().add(new THREE.Vector3(0, -sag, bow)));
+    const bez = new THREE.CubicBezierCurve3(p0, c1, c2, p3);
+    const pts = bez.getPoints(32).map(clampV); pts[0].copy(p0); pts[pts.length - 1].copy(p3);
+    const curve = new THREE.CatmullRomCurve3(pts);
+    this.lastPoints = pts; this.lastMinY = minY;
+    this.tube.geometry.dispose(); this.tube.geometry = new THREE.TubeGeometry(curve, 48, 0.022, 8, false);
+    this.mat.map.repeat.set(Math.max(4, curve.getLength() * 30), 1);
+  }
+}
+
+class PlugboardInteraction {
+  static COLORS = ['#7a2a24', '#2f4a32', '#27344f', '#a8842e', '#4a3020', '#222222', '#6b5a3c', '#5a2f45', '#3e5a5a', '#8a5a2e', '#55603a', '#3a3a52', '#7a6a5a'];
+  static HISTORICAL = 'AV BS CG DL FU HZ IN KM OW RX';
+  constructor(scene3d, engine, audio, onChange) {
+    this.s = scene3d; this.engine = engine; this.audio = audio; this.onChange = onChange || (() => {});
+    this.snapRadius = 0.17; this.insertZ = 0.1; this.hoverZ = 0.32;
+    this.cables = PlugboardInteraction.COLORS.map((c, i) => { const pc = new PatchCable(i, c, scene3d); scene3d.plugboardGroup.add(pc.group); return pc; });
+    this.raycaster = new THREE.Raycaster(); this.ndc = new THREE.Vector2(); this.drag = null; this.busy = false;
+    scene3d.updatables.push(() => this.cables.forEach(c => c.rebuild()));
+  }
+  socketPos(ch, z) { const p = this.s.sockets[ch].pos; return new THREE.Vector3(p.x, p.y, z); }
+  occupant(ch) { for (const c of this.cables) { if (c.a === ch) return { cable: c, end: 'a' }; if (c.b === ch) return { cable: c, end: 'b' }; } return null; }
+  freeCable() { return this.cables.find(c => !c.group.visible && c.a === null && c.b === null); }
+  setNDC(e) { this.s.toNDC(e, this.ndc); this.raycaster.setFromCamera(this.ndc, this.s.camera); }
+  pick(e) {
+    this.setNDC(e);
+    const plugs = this.cables.filter(c => c.group.visible).flatMap(c => [c.plugA, c.plugB]);
+    const hp = this.raycaster.intersectObjects(plugs, true)[0];
+    if (hp) return { type: 'plug', cable: hp.object.userData.cable, end: hp.object.userData.end };
+    const hs = this.raycaster.intersectObjects(Object.values(this.s.sockets).map(s => s.hit), false)[0];
+    if (hs) return { type: 'socket', letter: hs.object.userData.socket };
+    return null;
+  }
+  panelPoint(e) {
+    this.setNDC(e);
+    const g = this.s.plugboardGroup; g.updateMatrixWorld();
+    const n = new THREE.Vector3(0, 0, 1).transformDirection(g.matrixWorld);
+    const p = new THREE.Vector3(0, 0, this.hoverZ).applyMatrix4(g.matrixWorld);
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(n, p), out = new THREE.Vector3();
+    if (!this.raycaster.ray.intersectPlane(plane, out)) return null;
+    return g.worldToLocal(out);
+  }
+  showGlow(ch, on) {
+    for (const k in this.s.sockets) {
+      const gl = this.s.sockets[k].glow, target = (on && k === ch) ? 0.95 : 0;
+      if (target > 0) gl.visible = true;
+      if (gl.material.opacity !== target || (target === 0 && gl.visible)) gsap.to(gl.material, { opacity: target, duration: 0.12, onComplete: () => { if (target === 0) gl.visible = false; } });
+    }
+  }
+  onPointerDown(e, hit) {
+    if (this.busy) return false;
+    if (hit.type === 'plug') {
+      const { cable, end } = hit, letter = cable[end], other = end === 'a' ? 'b' : 'a';
+      if (letter === null) return false;
+      this.engine.disconnect(letter); cable[end] = null;
+      gsap.killTweensOf(cable.plug(end).position);
+      gsap.to(cable.plug(end).position, { z: this.hoverZ, duration: 0.12 });
+      this.drag = { cable, end, fixed: cable[other], origin: letter, moved: false, x: e.clientX, y: e.clientY, isNew: false, snap: null };
+      this.audio.pull(); this.onChange(); return true;
+    }
+    if (hit.type === 'socket') {
+      if (this.occupant(hit.letter)) return false;
+      if (this.engine.pairs.length >= 13) { this.onChange(I18N.t('full')); return false; }
+      const c = this.freeCable(); if (!c) return false;
+      c.a = hit.letter; c.b = null; c.group.visible = true;
+      c.plugA.position.copy(this.socketPos(hit.letter, this.hoverZ)); c.plugB.position.copy(this.socketPos(hit.letter, this.hoverZ + 0.05));
+      c.plugA.scale.setScalar(1); c.plugB.scale.setScalar(1);
+      gsap.to(c.plugA.position, { z: this.insertZ, duration: 0.3, ease: 'back.out(3)' }); this.audio.clunk();
+      this.drag = { cable: c, end: 'b', fixed: hit.letter, origin: null, moved: true, x: e.clientX, y: e.clientY, isNew: true, snap: null };
+      return true;
+    }
+    return false;
+  }
+  onPointerMove(e) {
+    const d = this.drag; if (!d) return;
+    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) d.moved = true;
+    const p = this.panelPoint(e); if (!p) return;
+    const plug = d.cable.plug(d.end);
+    let best = null, bd = Infinity;
+    for (const ch of ALPHA) {
+      if (ch === d.fixed || (this.occupant(ch) && ch !== d.origin) ) continue;
+      const sp = this.s.sockets[ch].pos, dist = Math.hypot(sp.x - p.x, sp.y - p.y);
+      if (dist < bd) { bd = dist; best = ch; }
+    }
+    if (best && bd < this.snapRadius) {
+      const target = this.socketPos(best, this.hoverZ * 0.6);
+      plug.position.lerp(target, 0.55);
+      if (d.snap !== best) {
+        d.snap = best; this.showGlow(best, true); this.audio.snap();
+        gsap.fromTo(plug.scale, { x: 1.18, y: 1.18, z: 1.18 }, { x: 1, y: 1, z: 1, duration: 0.25, ease: 'elastic.out(1,0.4)' });
+        gsap.fromTo(plug.rotation, { z: 0.08 }, { z: 0, duration: 0.3, ease: 'elastic.out(1,0.3)' });
+      }
+    } else {
+      if (d.snap) { d.snap = null; this.showGlow(null, false); }
+      plug.position.lerp(new THREE.Vector3(p.x, p.y, this.hoverZ), 0.7);
+    }
+  }
+  onPointerUp() {
+    const d = this.drag; if (!d) return; this.drag = null; this.showGlow(null, false);
+    const c = d.cable, plug = c.plug(d.end);
+    if (!d.moved && !d.isNew) { this.unplugCable(c); return; }
+    if (d.snap && d.fixed) {
+      const ch = d.snap; c[d.end] = ch;
+      plug.position.copy(this.socketPos(ch, this.hoverZ * 0.6));
+      gsap.to(plug.position, { z: this.insertZ, duration: 0.35, ease: 'back.out(2.5)', onComplete: () => this.audio.clunk() });
+      this.engine.connect(d.fixed, ch); this.onChange(); return;
+    }
+    this.unplugCable(c);
+  }
+  unplugCable(c, silent) {
+    if (c.a) this.engine.disconnect(c.a); else if (c.b) this.engine.disconnect(c.b);
+    c.a = null; c.b = null;
+    if (!silent) this.audio.pull();
+    const tl = gsap.timeline({ onComplete: () => { c.group.visible = false; } });
+    tl.to([c.plugA.position, c.plugB.position], { z: 0.5, duration: 0.18, ease: 'power2.out' })
+      .to([c.plugA.position, c.plugB.position], { y: -1.2, duration: 0.35, ease: 'power2.in' })
+      .to([c.plugA.scale, c.plugB.scale], { x: 0.01, y: 0.01, z: 0.01, duration: 0.2 }, '-=0.15');
+    this.onChange(); return tl;
+  }
+  unplugAll(instant = false) {
+    this.drag = null;
+    this.cables.forEach((c, i) => {
+      if (!c.group.visible) return;
+      if (instant) { gsap.killTweensOf([c.plugA.position, c.plugB.position]); c.a = c.b = null; c.group.visible = false; }
+      else gsap.delayedCall(i * 0.05, () => this.unplugCable(c, i > 0));
+    });
+    this.engine.clearPlugboard(); this.onChange();
+  }
+  // animate a pair into place: fly-in sequence
+  placePair(c, x, y, delay = 0, instant = false) {
+    c.a = x; c.b = y; c.group.visible = true; c._last = '';
+    const pa = this.socketPos(x, this.insertZ), pb = this.socketPos(y, this.insertZ);
+    gsap.killTweensOf([c.plugA.position, c.plugB.position, c.plugA.scale, c.plugB.scale]);
+    c.plugA.scale.setScalar(1); c.plugB.scale.setScalar(1);
+    if (instant) { c.plugA.position.copy(pa); c.plugB.position.copy(pb); return; }
+    c.plugA.position.set(pa.x * 0.3, -1.5, 2.2); c.plugB.position.set(pb.x * 0.3, -1.5, 2.2);
+    const tl = gsap.timeline({ delay });
+    tl.to(c.plugA.position, { x: pa.x, y: pa.y, z: this.hoverZ, duration: 0.45, ease: 'power3.out' })
+      .to(c.plugA.position, { z: this.insertZ, duration: 0.22, ease: 'back.out(2.5)', onStart: () => this.audio.snap(), onComplete: () => this.audio.clunk() })
+      .to(c.plugB.position, { x: pb.x, y: pb.y, z: this.hoverZ, duration: 0.45, ease: 'power3.out' }, '-=0.45')
+      .to(c.plugB.position, { z: this.insertZ, duration: 0.22, ease: 'back.out(2.5)', onComplete: () => this.audio.clunk() });
+    return tl;
+  }
+  applyPairs(pairs, animated = true) {
+    this.unplugAll(true);
+    this.busy = animated;
+    pairs.slice(0, 13).forEach((p, i) => { if (this.engine.connect(p[0], p[1])) this.placePair(this.cables[i], p[0], p[1], i * 0.18, !animated); });
+    if (animated) gsap.delayedCall(pairs.length * 0.18 + 0.8, () => { this.busy = false; });
+    this.onChange();
+  }
+  randomize() {
+    const l = ALPHA.split('').sort(() => Math.random() - 0.5), pairs = [];
+    for (let k = 0; k < 13; k++) pairs.push(l[2 * k] + l[2 * k + 1]);
+    this.applyPairs(pairs, true);
+  }
+  relayout() {
+    this.drag = null; this.showGlow(null, false);
+    this.cables.forEach(c => {
+      if (!c.group.visible) return;
+      gsap.killTweensOf([c.plugA.position, c.plugB.position]);
+      if (c.a && c.b) { c.plugA.position.copy(this.socketPos(c.a, this.insertZ)); c.plugB.position.copy(this.socketPos(c.b, this.insertZ)); c._last = ''; }
+      else { c.a = c.b = null; c.group.visible = false; }
+    });
+    this.busy = false;
+  }
+  glowPath(path) {
+    this.cables.forEach(c => { gsap.killTweensOf(c.mat); c.mat.emissiveIntensity = 0; });
+    const fire = (ch, delay) => { const o = this.occupant(ch); if (!o) return; const m = o.cable.mat;
+      gsap.timeline({ delay }).to(m, { emissiveIntensity: 2.2, duration: 0.08 }).to(m, { emissiveIntensity: 0.9, duration: 0.1, yoyo: true, repeat: 3 }).to(m, { emissiveIntensity: 0, duration: 1.0 }); };
+    if (path.plugIn.swapped) fire(path.plugIn.from, 0);
+    if (path.plugOut.swapped) fire(path.plugOut.from, 0.25);
+  }
+}
+
+const I18N = {
+  lang: 'zh',
+  t(k) { return (this.d[this.lang] && this.d[this.lang][k]) ?? this.d.en[k] ?? k; },
+  d: {
+    zh: { sub: 'CHIFFRIERMASCHINE · 二战德军密码机', rotors: '转子 (左→右)', rotor: '转子', ring: '字母环设置 (Ringstellung)', ringT: '字母环相对内部接线的偏移量，属于每日密钥的一部分', winT: '转子读数与视角平移（可拖动，双击复位）', pos: '初始位', refl: '反射器', plugboard: '插线板',
+      focus: '聚焦插线板', over: '总览视角', rand: '一键插满13对', clear: '全部拔出', hist: '历史预设10对', explode: '一键分解', collapse: '合拢复位',
+      focusT: '相机正对前部插线板并锁定旋转', overT: '返回总览视角', randT: '随机生成13对跳线并依次飞入', clearT: '拔出全部跳线', histT: '载入10对历史接线', explodeT: '机械分解图',
+      auto: '自动敲击 (350ms/字符)', ph: '粘贴明文/密文…', play: '▶ 自动敲击', stop: '■ 停止', resetPos: '复位转子', resetPosT: '完全复位：转子 I-II-III、字母环 AAA、初始位 AAA、反射器 UKW-B', viewCopied: '视角已复制到剪贴板：', clearTape: '清空纸带',
+      fix: 'FIX 固定', fixT: '锁定画布为 1920×1080 (16:9)，窗口缩放时模型大小不变', panUp: '视角平移：向上', panDown: '视角平移：向下', panLeft: '视角平移：向左', panRight: '视角平移：向右', panFwd: '沿地面向前推近', panBack: '沿地面向后拉远', panHome: '复位默认视角', flow: '信号流图', flowT: '以分层网络图显示 26 路信号经过各级的映射与本次按键的电流路径', flowKb: '键盘', flowPb: '插线板', flowRotor: '转子', flowLamp: '灯板', flowLast: '本次路径', flowPreview: '预览', flowHint: '按键查看信号传播；悬停左侧键盘节点可预览路径', tin: '输入', tout: '输出', full: '13 对已满', none: '— 无接线 (0/13) —',
+      help: '<b style="color:#d8c38a">操作说明</b><br>· 物理键盘 A–Z 直接加密 / 点击 3D 按键<br>· 点击转子上半部 = 向前拨动，下半部 = 向后<br>· 插线板：点击空插槽生成插头并拖到另一插槽（靠近自动磁吸）<br>· 拖拽已插入插头可改插；单击已插入插头 = 拔出整根线<br>· 解密：复位到相同初始位置，输入密文即可（自反性）<br>· Shift+V：复制当前相机视角 JSON 到剪贴板<br><b style="color:#d8c38a">历史拼写惯例</b><br>· 机器只有 26 个字母：操作员手工将 Ä/Ö/Ü/ß 写作 AE/OE/UE/SS<br>· 句号用 X 代替，数字通常用单词拼出<br>· 海军有时把 CH 写作 Q<br><b style="color:#d8c38a">转子参考</b><br>· I–V：陆军/空军，5 选 3；VI–VIII：仅海军<br>· 缺口：I=Q, II=E, III=V, IV=J, V=Z, VI/VII/VIII=Z+M<br>· 翻转：窗口显示缺口字母时，下一次按键带动左侧转子步进<br>· 反射器：UKW-B（标准）、UKW-C<br>· 初始位转动整个转子；字母环设置的偏移保持不变' },
+    en: { sub: 'CIPHER MACHINE · WEHRMACHT / KRIEGSMARINE', rotors: 'ROTORS (LEFT→RIGHT)', rotor: 'Rotor', ring: 'Ring Setting (Ringstellung)', ringT: 'Offsets the alphabet ring relative to the internal wiring; part of the daily key', winT: 'Rotor readout & camera pan (drag to move, double-click to reset)', pos: 'Start', refl: 'Reflector', plugboard: 'PLUGBOARD',
+      focus: 'Focus Plugboard', over: 'Overview', rand: 'Random 13 Pairs', clear: 'Unplug All', hist: 'Historic 10 Pairs', explode: 'Exploded View', collapse: 'Reassemble',
+      focusT: 'Face the front plugboard and lock rotation', overT: 'Back to overview camera', randT: 'Generate 13 random cables (fly-in)', clearT: 'Remove all cables', histT: 'Load 10 historic pairs', explodeT: 'Mechanical exploded view',
+      auto: 'AUTO-TYPE (350 ms/char)', ph: 'Paste plaintext / ciphertext…', play: '▶ Auto-type', stop: '■ Stop', resetPos: 'Reset Rotors', resetPosT: 'Full reset: rotors I-II-III, rings AAA, start AAA, reflector UKW-B', viewCopied: 'Camera view copied to clipboard:', clearTape: 'Clear Tapes',
+      fix: 'FIX', fixT: 'Lock canvas to 1920×1080 (16:9); model keeps its on-screen size when resizing', panUp: 'Pan up', panDown: 'Pan down', panLeft: 'Pan left', panRight: 'Pan right', panFwd: 'Move forward (ground plane)', panBack: 'Move back (ground plane)', panHome: 'Reset to default view', flow: 'Signal Flow', flowT: 'Layered diagram of all 26 mappings through each stage and the current key path', flowKb: 'Keyboard', flowPb: 'Plugboard', flowRotor: 'Rotor', flowLamp: 'Lamps', flowLast: 'Path', flowPreview: 'Preview', flowHint: 'Type to see the signal propagate; hover a keyboard node to preview its path', tin: 'INPUT', tout: 'OUTPUT', full: 'All 13 pairs in use', none: '— no cables (0/13) —',
+      help: '<b style="color:#d8c38a">HOW TO USE</b><br>· Type A–Z on your keyboard or click 3D keys<br>· Click upper half of a rotor = step forward, lower half = back<br>· Plugboard: click an empty socket, drag the plug to another (magnetic snap)<br>· Drag an inserted plug to re-route; single click = unplug cable<br>· Decrypt: reset to the same start position and type the ciphertext<br>· Shift+V: copy current camera view (JSON) to clipboard<br><b style="color:#d8c38a">HISTORICAL SPELLING</b><br>· Only 26 letters: operators wrote Ä/Ö/Ü/ß as AE/OE/UE/SS by hand<br>· X was used for a full stop; numbers were usually spelled out<br>· The navy sometimes wrote CH as Q<br><b style="color:#d8c38a">ROTOR REFERENCE</b><br>· I–V: Army/Luftwaffe, 3 chosen from 5; VI–VIII: Kriegsmarine only<br>· Notches: I=Q, II=E, III=V, IV=J, V=Z, VI/VII/VIII=Z+M<br>· Turnover: when the window shows the notch letter, the next keypress steps the rotor to its left<br>· Reflectors: UKW-B (standard), UKW-C<br>· Start position turns the whole rotor; the ring-setting offset stays fixed' },
+    de: { sub: 'CHIFFRIERMASCHINE · WEHRMACHT / KRIEGSMARINE', rotors: 'WALZENLAGE (LINKS→RECHTS)', rotor: 'Walze', ring: 'Ringstellung', ringT: 'Verdreht den Buchstabenring gegenüber der inneren Verdrahtung; Teil des Tagesschlüssels', winT: 'Walzenfenster & Kameraschwenk (verschiebbar, Doppelklick = zurück)', pos: 'Grundst.', refl: 'Umkehrw.', plugboard: 'STECKERBRETT',
+      focus: 'Steckerbrett', over: 'Übersicht', rand: '13 Stecker zufällig', clear: 'Alle ziehen', hist: 'Historisch (10)', explode: 'Explosionsansicht', collapse: 'Zusammenbauen',
+      focusT: 'Kamera auf das Steckerbrett, Drehung gesperrt', overT: 'Zurück zur Übersicht', randT: '13 zufällige Steckverbindungen', clearT: 'Alle Stecker ziehen', histT: '10 historische Paare laden', explodeT: 'Mechanische Explosionsansicht',
+      auto: 'AUTOMATIK (350 ms/Zeichen)', ph: 'Klartext / Geheimtext einfügen… (Ä→AE, Ö→OE, Ü→UE, ß→SS)', play: '▶ Tippen', stop: '■ Halt', resetPos: 'Walzen zurücksetzen', resetPosT: 'Vollständig: Walzen I-II-III, Ringe AAA, Grundstellung AAA, UKW-B', viewCopied: 'Kameraansicht kopiert:', clearTape: 'Streifen leeren',
+      fix: 'FIX', fixT: 'Leinwand auf 1920×1080 (16:9) fixieren; Modellgröße bleibt beim Skalieren gleich', panUp: 'Ansicht nach oben', panDown: 'Ansicht nach unten', panLeft: 'Ansicht nach links', panRight: 'Ansicht nach rechts', panFwd: 'Vorwärts (Bodenebene)', panBack: 'Zurück (Bodenebene)', panHome: 'Standardansicht', flow: 'Signalfluss', flowT: 'Schichtdiagramm aller 26 Zuordnungen je Stufe und des aktuellen Stromwegs', flowKb: 'Tastatur', flowPb: 'Steckerbrett', flowRotor: 'Walze', flowLamp: 'Lampen', flowLast: 'Weg', flowPreview: 'Vorschau', flowHint: 'Tippen zeigt den Signalweg; über Tastatur-Knoten fahren für Vorschau', tin: 'EINGABE', tout: 'AUSGABE', full: 'Alle 13 Paare belegt', none: '— keine Stecker (0/13) —',
+      help: '<b style="color:#d8c38a">BEDIENUNG</b><br>· Tasten A–Z tippen oder 3D-Tasten klicken<br>· Obere Walzenhälfte klicken = vor, untere = zurück<br>· Steckerbrett: leere Buchse klicken, Stecker zu anderer Buchse ziehen (magnetisch)<br>· Gesteckten Stecker ziehen = umstecken; einfacher Klick = Kabel ziehen<br>· Entschlüsseln: gleiche Grundstellung, Geheimtext eintippen<br>· Shift+V: aktuelle Kameraansicht (JSON) in die Zwischenablage<br><b style="color:#d8c38a">SCHREIBREGELN</b><br>· Nur 26 Buchstaben: Ä/Ö/Ü/ß wurden von Hand als AE/OE/UE/SS geschrieben<br>· X diente als Punkt; Zahlen wurden meist ausgeschrieben<br>· Die Marine schrieb CH teils als Q<br><b style="color:#d8c38a">WALZEN</b><br>· I–V: Heer/Luftwaffe, 3 aus 5; VI–VIII: nur Kriegsmarine<br>· Kerben: I=Q, II=E, III=V, IV=J, V=Z, VI/VII/VIII=Z+M<br>· Übertrag: zeigt das Fenster den Kerbbuchstaben, schaltet der nächste Tastendruck die linke Walze weiter<br>· Umkehrwalzen: UKW-B (Standard), UKW-C<br>· Grundstellung dreht die ganze Walze; der Ringstellungs-Versatz bleibt fest' }
+  }
+};
+
+/* ============================================================
+   4. INTERACTION CONTROLLER
+   ============================================================ */
+/* ============================================================
+   SIGNAL FLOW PANEL (2D layered diagram)
+   ============================================================ */
+class SignalFlowPanel {
+  static STEP = 30;   // ms per layer: 11 layers -> 330 ms (< 350 ms autotype cadence)
+  constructor(app) {
+    this.app = app; this.e = app.engine; this.open = false; this.N = 12;
+    const el = this.el = document.createElement('div'); el.id = 'flow';
+    el.innerHTML = '<div class="fh"><span class="ft" data-i18n="flow"></span><button class="fx">✕</button></div><canvas></canvas><div class="ff"></div>';
+    document.body.appendChild(el);
+    this.cv = el.querySelector('canvas'); this.g = this.cv.getContext('2d'); this.foot = el.querySelector('.ff');
+    el.querySelector('.fx').addEventListener('click', () => this.toggle(false));
+    const head = el.querySelector('.fh'); let d = null;
+    head.addEventListener('pointerdown', ev => { if (ev.target.closest('.fx')) return; const r = el.getBoundingClientRect(); d = { dx: ev.clientX - r.left, dy: ev.clientY - r.top }; head.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+    head.addEventListener('pointermove', ev => { if (!d) return; el.style.left = Math.max(0, Math.min(innerWidth - 80, ev.clientX - d.dx)) + 'px'; el.style.top = Math.max(0, Math.min(innerHeight - 30, ev.clientY - d.dy)) + 'px'; });
+    head.addEventListener('pointerup', () => { d = null; });
+    new ResizeObserver(() => { if (this.open) { this._size(); this.kick(); } }).observe(el);
+    this.cv.addEventListener('mousemove', ev => this._hover(ev));
+    this.cv.addEventListener('mouseleave', () => { if (this.hover != null) { this.hover = null; this._footer(); this.kick(); } });
+    this.to = this._maps(); this.from = this.to.map(a => a.slice()); this.morphT0 = -1; this.sig = this._sig(); this.pulse = null; this.raf = 0; this.hover = null;
+    setInterval(() => { if (this.open) this.checkState(); }, 120);
+  }
+  _place() {
+    // top-centre, between the control panel (left) and readout/help (right); height ~32% of window,
+    // reduced if it would cover the machine in the current camera view
+    const ui = document.getElementById('ui').getBoundingClientRect(), help = document.getElementById('help').getBoundingClientRect();
+    const L = ui.right + 12, Rb = help.left - 12, top = 16;
+    const w = Math.max(420, Math.min(1200 * Math.max(0.55, innerHeight / 1080), Rb - L));
+    let left = (innerWidth - w) / 2; if (left < L) left = L; if (left + w > Rb) left = Math.max(L, Rb - w);
+    let h = Math.round(innerHeight * 0.32);
+    const mTop = this._machineTop(); if (mTop != null) h = Math.min(h, mTop - top - 12);
+    h = Math.max(220, h);
+    Object.assign(this.el.style, { width: w + 'px', height: h + 'px', left: left + 'px', top: top + 'px' });
+  }
+  _machineTop() {
+    const s = this.app.s; if (!s) return null;
+    const box = new THREE.Box3(); for (const o of [s.woodenCase, s.topMetalLid, s.rotorAssembly, s.keyboardGroup, s.plugboardGroup]) box.expandByObject(o);
+    let minY = Infinity; const v = new THREE.Vector3(); s.camera.updateMatrixWorld();
+    for (let i = 0; i < 8; i++) { v.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).project(s.camera); minY = Math.min(minY, (1 - v.y) / 2 * innerHeight); }
+    return isFinite(minY) ? minY : null;
+  }
+  toggle(on = !this.open) {
+    this.open = on; this.el.style.display = on ? 'flex' : 'none';
+    if (on) { if (!this.placed) { this._place(); this.placed = true; } this.checkState(true); this._size(); this._footer(); this.kick(); }
+    this.app._on('bFlow', on);
+  }
+  _size() { const r = this.cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2); this.W = r.width; this.H = r.height; this.cv.width = Math.max(1, Math.round(r.width * dpr)); this.cv.height = Math.max(1, Math.round(r.height * dpr)); this.g.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  _sig() { const e = this.e; return e.order.join() + '|' + e.rings.join() + '|' + e.positions.join() + '|' + e.reflectorName + '|' + e.plug.join(); }
+  // per layer j: map input index (column j) -> output index (column j+1), from live engine state (no stepping)
+  _maps() {
+    const e = this.e, id = [...Array(26).keys()], rot = (i, back) => id.map(c => e._pass(i, c, back).out);
+    return [e.plug.slice(), id, rot(2, false), rot(1, false), rot(0, false), e.reflector.slice(), rot(0, true), rot(1, true), rot(2, true), e.plug.slice(), id];
+  }
+  _mt() { if (this.morphT0 < 0) return 1; const k = Math.min(1, (performance.now() - this.morphT0) / 250); return 1 - Math.pow(1 - k, 3); }
+  _curY() { const t = this._mt(); return this.from.map((L, j) => L.map((v, i) => v + (this.to[j][i] - v) * t)); }
+  checkState(force) {
+    const s = this._sig(); if (s === this.sig && !force) return;
+    this.sig = s; this.from = this._curY(); this.to = this._maps(); this.morphT0 = performance.now(); this.kick();
+  }
+  onPress(path) {
+    if (!this.open) return;
+    this.checkState();
+    const v = (c) => c.charCodeAt(0) - 65;
+    const f = path.forward, b = path.backward;
+    this.pulse = { t0: performance.now(), vals: [v(path.key), v(path.plugIn.to), v(path.plugIn.to), f[0].out, f[1].out, f[2].out, path.reflector.out, b[0].out, b[1].out, b[2].out, v(path.plugOut.to), v(path.lamp)] };
+    this._footer(); this.kick();
+  }
+  _pathText(vals) { return vals.map(i => ALPHA[i]).join('→'); }
+  _footer() {
+    if (this.hover != null) { this.foot.textContent = I18N.t('flowPreview') + ': ' + this._pathText(this._trace(this.hover)); return; }
+    this.foot.textContent = this.pulse ? (I18N.t('flowLast') + ': ' + this._pathText(this.pulse.vals)) : I18N.t('flowHint');
+  }
+  _trace(k) { const out = [k]; let c = k; for (const L of this.to) { c = L[c]; out.push(c); } return out; }
+  _geom() { const top = 40, bot = 8, left = 44, right = 44, W = this.W, H = this.H; return { xs: (j) => left + (W - left - right) * j / (this.N - 1), ys: (i) => top + (H - top - bot) * (i + 0.5) / 26, top }; }
+  _hover(ev) {
+    const r = this.cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top, G = this._geom();
+    let h = null; if (Math.abs(x - G.xs(0)) < 16) { const i = Math.round((y - G.ys(0)) / (G.ys(1) - G.ys(0))); if (i >= 0 && i < 26) h = i; }
+    if (h !== this.hover) { this.hover = h; this._footer(); this.kick(); }
+  }
+  kick() { if (!this.open || this.raf) return; this.raf = requestAnimationFrame(() => { this.raf = 0; this.draw(); if (this._animating()) this.kick(); }); }
+  _animating() { const now = performance.now(); return (this.morphT0 >= 0 && now - this.morphT0 < 270) || (this.pulse && now - this.pulse.t0 < 1500); }
+  _cableColor(i) { const o = this.app.pb.occupant(ALPHA[i]); return o ? o.cable.color : null; }
+  _header(j) {
+    const e = this.e, slot = [null, null, null, 2, 1, 0, null, 0, 1, 2][j];
+    const name = [I18N.t('flowKb'), I18N.t('flowPb'), 'ETW', 'R ▸', 'M ▸', 'L ▸', 'UKW', '◂ L', '◂ M', '◂ R', I18N.t('flowPb'), I18N.t('flowLamp')][j];
+    let sub = j === 6 ? 'UKW-' + e.reflectorName : '';
+    if (slot != null) sub = e.order[slot] + ' ' + ALPHA[e.positions[slot]] + '/' + ALPHA[e.rings[slot]];
+    if (slot != null) return [I18N.t('flowRotor') + ' ' + name, sub];
+    return [name, sub];
+  }
+  _bez(g, x0, y0, x1, y1) { const mx = (x0 + x1) / 2; g.moveTo(x0, y0); g.bezierCurveTo(mx, y0, mx, y1, x1, y1); }
+  _bezPt(x0, y0, x1, y1, t) { const mx = (x0 + x1) / 2, u = 1 - t; return [u * u * u * x0 + 3 * u * u * t * mx + 3 * u * t * t * mx + t * t * t * x1, u * u * u * y0 + 3 * u * u * t * y0 + 3 * u * t * t * y1 + t * t * t * y1]; }
+  draw() {
+    const g = this.g, W = this.W, H = this.H; if (!W || !H) return;
+    const G = this._geom(), xs = G.xs, ys = G.ys, now = performance.now();
+    g.clearRect(0, 0, W, H);
+    // headers
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let j = 0; j < this.N; j++) { const [a, b] = this._header(j); g.fillStyle = '#e8c873'; g.font = 'bold 10px "Courier New",monospace'; g.fillText(a, xs(j), 12); g.fillStyle = '#9a8f72'; g.font = '10px "Courier New",monospace'; g.fillText(b, xs(j), 25); }
+    // edges (faint), plugged edges tinted with cable colour
+    const Y = this._curY();
+    g.lineWidth = 1;
+    for (let j = 0; j < this.N - 1; j++) {
+      const x0 = xs(j), x1 = xs(j + 1), plugLayer = j === 0 || j === 9;
+      g.strokeStyle = 'rgba(201,162,74,0.16)'; g.beginPath();
+      for (let i = 0; i < 26; i++) { if (plugLayer && this.e.plug[i] !== i) continue; this._bez(g, x0, ys(i), x1, ys(Y[j][i])); }
+      g.stroke();
+      if (plugLayer) for (let i = 0; i < 26; i++) { if (this.e.plug[i] === i) continue; const c = this._cableColor(i) || '#c9a24a'; g.strokeStyle = c; g.globalAlpha = 0.85; g.lineWidth = 1.6; g.beginPath(); this._bez(g, x0, ys(i), x1, ys(Y[j][i])); g.stroke(); g.globalAlpha = 1; g.lineWidth = 1; }
+    }
+    // hover preview
+    if (this.hover != null) {
+      const v = this._trace(this.hover); g.strokeStyle = 'rgba(120,200,255,0.75)'; g.lineWidth = 1.6; g.beginPath();
+      for (let j = 0; j < this.N - 1; j++) this._bez(g, xs(j), ys(v[j]), xs(j + 1), ys(v[j + 1])); g.stroke(); g.lineWidth = 1;
+    }
+    // pulse
+    let active = null, el = 0;
+    if (this.pulse) {
+      el = now - this.pulse.t0; const v = this.pulse.vals, S = SignalFlowPanel.STEP, endT = S * (this.N - 1);
+      const alpha = el < endT + 150 ? 1 : Math.max(0, 1 - (el - endT - 150) / 1000);
+      if (alpha > 0) {
+        active = { v, alpha };
+        g.save(); g.shadowColor = '#ffb347'; g.shadowBlur = 10; g.strokeStyle = `rgba(255,190,90,${alpha})`; g.lineWidth = 2.4;
+        for (let j = 0; j < this.N - 1; j++) {
+          const s0 = j * S; if (el <= s0) break;
+          const prog = Math.min(1, (el - s0) / S), x0 = xs(j), y0 = ys(v[j]), x1 = xs(j + 1), y1 = ys(v[j + 1]);
+          g.beginPath(); g.moveTo(x0, y0); for (let k = 1; k <= 12; k++) { const p = this._bezPt(x0, y0, x1, y1, prog * k / 12); g.lineTo(p[0], p[1]); } g.stroke();
+          if (prog < 1) { const p = this._bezPt(x0, y0, x1, y1, prog); g.fillStyle = '#fff2c0'; g.beginPath(); g.arc(p[0], p[1], 4, 0, 7); g.fill(); }
+        }
+        g.restore();
+      }
+    }
+    // nodes
+    g.font = '8px "Courier New",monospace';
+    for (let j = 0; j < this.N; j++) for (let i = 0; i < 26; i++) {
+      const x = xs(j), y = ys(i), r = Math.min(6, (ys(1) - ys(0)) * 0.42);
+      let on = active && el >= j * SignalFlowPanel.STEP && active.v[j] === i, hv = this.hover != null && this._trace(this.hover)[j] === i;
+      g.beginPath(); g.arc(x, y, r, 0, 7);
+      g.fillStyle = on ? `rgba(255,200,100,${0.35 + 0.65 * active.alpha})` : hv ? 'rgba(120,200,255,0.6)' : '#1e1910'; g.fill();
+      g.strokeStyle = on ? '#fff2c0' : '#6b5426'; g.lineWidth = 1; g.stroke();
+      g.fillStyle = on || hv ? '#1a1206' : '#b8a578'; g.fillText(ALPHA[i], x, y + 0.5);
+    }
+    // lamp flash
+    if (active && el >= SignalFlowPanel.STEP * (this.N - 1)) {
+      const x = xs(this.N - 1), y = ys(active.v[this.N - 1]), k = Math.max(0, 1 - (el - SignalFlowPanel.STEP * (this.N - 1)) / 700);
+      g.save(); g.shadowColor = '#ffcc55'; g.shadowBlur = 24 * k; g.fillStyle = `rgba(255,220,120,${0.25 + 0.6 * k})`; g.beginPath(); g.arc(x, y, 8 + 6 * k, 0, 7); g.fill(); g.restore();
+      g.fillStyle = '#1a1206'; g.font = 'bold 9px "Courier New",monospace'; g.fillText(ALPHA[active.v[this.N - 1]], x, y + 0.5);
+    }
+  }
+}
+
+class InteractionController {
+  constructor() {
+    this.engine = new EnigmaEngine();
+    this.audio = new MechAudio();
+    this.s = new Enigma3DScene(document.getElementById('c'), this.engine);
+    this.pb = new PlugboardInteraction(this.s, this.engine, this.audio, (m) => this.refreshPairs(m));
+    this.tapeIn = ''; this.tapeOut = ''; this.exploded = false; this.auto = null; this.startPos = [0, 0, 0];
+    this.$ = (id) => document.getElementById(id);
+    this._ui(); this._pointer(); this._keyboard();
+    this.pb.applyPairs(PlugboardInteraction.HISTORICAL.split(' '), false);
+    this.s.start();
+  }
+  _ui() {
+    const fill = (sel, opts, v) => { sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join(''); sel.value = v; };
+    for (let i = 0; i < 3; i++) {
+      fill(this.$('o' + i), ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'], this.engine.order[i]);
+      fill(this.$('r' + i), ALPHA.split('').map((c, k) => c), 'A');
+      fill(this.$('p' + i), ALPHA.split(''), 'A');
+      this.$('o' + i).onchange = () => this.changeOrder(i);
+      this.$('r' + i).onchange = () => { this.engine.rings[i] = EnigmaEngine.idx(this.$('r' + i).value); this.s.syncRotors(); this.audio.ratchet(2); };
+      this.$('p' + i).onchange = () => { this.engine.positions[i] = EnigmaEngine.idx(this.$('p' + i).value); this.startPos = this.engine.positions.slice(); this.s.syncRotors(); this.audio.ratchet(1); this.refreshWindows(); };
+    }
+    this.$('refl').onchange = () => { this.engine.setReflector(this.$('refl').value); this.s.buildReflectorWires(); this.audio.ratchet(2); };
+    this.$('bFocus').onclick = () => { this.focus = true; this.s.flyCamera(this.exploded ? { x: 0, y: -0.4, z: 4.9 } : { x: 0, y: -0.1, z: 3.6 }, this.exploded ? { x: 0, y: -0.45, z: 3.4 } : { x: 0, y: -0.15, z: 1.7 }, true); this._on('bFocus', true); };
+    this.$('bOver').onclick = () => { this.focus = false; { const [px, py, pz] = Enigma3DScene.HOME.pos, [tx, ty, tz] = Enigma3DScene.HOME.target; this.s.flyCamera({ x: px, y: py, z: pz }, { x: tx, y: ty, z: tz }, false); } this._on('bFocus', false); };
+    this.$('bRand').onclick = () => this.pb.randomize();
+    this.$('bClear').onclick = () => this.pb.unplugAll();
+    this.$('bHist').onclick = () => this.pb.applyPairs(PlugboardInteraction.HISTORICAL.split(' '), true);
+    this.$('bExplode').onclick = () => { this.exploded = !this.exploded; this.s.setExploded(this.exploded); this._on('bExplode', this.exploded); this.$('bExplode').textContent = I18N.t(this.exploded ? 'collapse' : 'explode'); };
+    this.$('bAuto').onclick = () => this.autoType(this.$('txt').value);
+    this.$('bStop').onclick = () => this.stopAuto();
+    this.$('bResetPos').onclick = () => this.fullReset();
+    this.$('bTape').onclick = () => { this.tapeIn = this.tapeOut = ''; this.renderTapes(); };
+    this.refreshWindows();
+    document.querySelectorAll('#lang button').forEach(b => b.onclick = () => this.setLang(b.dataset.lang));
+    let fx = true; try { fx = localStorage.getItem('enigmaFix') !== '0'; } catch (e) {}
+    const applyFix = (on) => { this.s.setFixed(on); this._on('bFix', on); try { localStorage.setItem('enigmaFix', on ? '1' : '0'); } catch (e) {} };
+    this.$('bFix').onclick = () => applyFix(!this.s.fixed); applyFix(fx);
+    let lang = 'en'; try { const sv = localStorage.getItem('enigmaLang'); if (['en', 'zh', 'de'].includes(sv)) lang = sv; } catch (e) {}
+    this.flow = new SignalFlowPanel(this);
+    this.$('bFlow').onclick = () => this.flow.toggle();
+    this.setLang(lang, true);
+    requestAnimationFrame(() => this.flow.toggle(true));  // open on load (after widgets are placed)
+    this._winWidget();
+  }
+  _floatWidget(w, key, autoPos, skipSel) {
+    let user = null; try { user = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+    const clamp = (x, y) => [Math.max(0, Math.min(innerWidth - w.offsetWidth, x)), Math.max(0, Math.min(innerHeight - w.offsetHeight, y))];
+    const place = (x, y) => { [x, y] = clamp(x, y); w.style.left = x + 'px'; w.style.top = y + 'px'; return [x, y]; };
+    const auto = () => { const [x, y] = autoPos(); place(x, y); };
+    const layout = () => user ? place(user[0], user[1]) : auto();
+    layout(); addEventListener('resize', layout);
+    let d = null;
+    w.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (skipSel && e.target.closest(skipSel)) return; e.preventDefault(); const r = w.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; w.setPointerCapture(e.pointerId); });
+    w.addEventListener('pointermove', (e) => { if (!d) return; e.stopPropagation(); user = place(e.clientX - d.dx, e.clientY - d.dy); });
+    const end = () => { if (!d) return; d = null; try { localStorage.setItem(key, JSON.stringify(user)); } catch (er) {} };
+    w.addEventListener('pointerup', end); w.addEventListener('pointercancel', end);
+    w.addEventListener('dblclick', (e) => { if (skipSel && e.target.closest(skipSel)) return; user = null; try { localStorage.removeItem(key); } catch (er) {} auto(); });
+    return layout;
+  }
+  _winWidget() {
+    // one tool widget: rotor readout tiles + pan pad; default directly below the help box, right-aligned
+    try { localStorage.removeItem('enigmaWinPos'); localStorage.removeItem('enigmaPanPos'); localStorage.removeItem('enigmaReadoutPos'); } catch (e) {}
+    const help = this.$('help'), win = this.$('win');
+    this._floatWidget(win, 'enigmaToolPos', () => { const r = help.getBoundingClientRect(); return [r.right - win.offsetWidth, r.bottom + 10]; }, '#pad button');
+    this._panPad();
+  }
+  fullReset() {
+    const e = this.engine, changed = e.order.join() !== 'I,II,III', reflChanged = e.reflectorName !== 'B';
+    e.setRotorOrder(['I', 'II', 'III']); e.setRings([0, 0, 0]); e.setPositions([0, 0, 0]); e.setReflector('B');
+    this.startPos = [0, 0, 0];
+    for (let i = 0; i < 3; i++) { this.$('o' + i).value = e.order[i]; this.$('r' + i).value = 'A'; if (changed) this.s.setRotorWiring(i); }
+    this.$('refl').value = 'B'; if (reflChanged) this.s.buildReflectorWires();
+    this.s.syncRotors(); this.refreshWindows();
+    this.audio.ratchet(3); setTimeout(() => this.audio.ratchet(3), 160);
+  }
+  toast(msg) {
+    let t = this.$('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.style.cssText = 'position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#1b1712ee;color:#f0dca0;border:1px solid #c9a24a;padding:8px 12px;font:12px Courier New,monospace;z-index:20;border-radius:3px;box-shadow:0 4px 16px #000a;pointer-events:none;white-space:pre'; document.body.appendChild(t); }
+    t.textContent = msg; gsap.killTweensOf(t); gsap.fromTo(t, { opacity: 0 }, { opacity: 1, duration: 0.15 }); gsap.to(t, { opacity: 0, duration: 0.4, delay: 3 });
+  }
+  copyView() {
+    const r = (v) => [v.x, v.y, v.z].map(n => Math.round(n * 1000) / 1000);
+    const json = JSON.stringify({ pos: r(this.s.camera.position), target: r(this.s.controls.target) });
+    const ok = () => this.toast(I18N.t('viewCopied') + '\n' + json), fail = () => this.toast(json);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json).then(ok, fail); else fail();
+  }
+  _panPad() {
+    const s = this.s, cam = s.camera, ctl = s.controls, v = new THREE.Vector3(), tmp = new THREE.Vector3();
+    const dirOf = (kind) => {
+      cam.updateMatrixWorld();
+      if (kind === 'left' || kind === 'right') v.setFromMatrixColumn(cam.matrixWorld, 0).multiplyScalar(kind === 'right' ? 1 : -1);
+      else if (kind === 'up' || kind === 'down') v.setFromMatrixColumn(cam.matrixWorld, 1).multiplyScalar(kind === 'up' ? 1 : -1);
+      else { cam.getWorldDirection(v); v.y = 0; if (v.lengthSq() < 1e-8) v.set(0, 0, -1); v.normalize(); if (kind === 'back') v.negate(); }
+      return v;
+    };
+    const move = (kind, amount) => {   // amount in fractions of camera distance
+      const d = cam.position.distanceTo(ctl.target);
+      tmp.copy(dirOf(kind)).multiplyScalar(d * amount);
+      // screen up/down/left/right: machine appears to move opposite to the camera, like dragging the view
+      cam.position.add(tmp); ctl.target.add(tmp); ctl.update(); s.invalidate && s.invalidate();
+    };
+    let hold = null;
+    const stop = () => { if (hold) { cancelAnimationFrame(hold.raf); clearTimeout(hold.timer); hold = null; } };
+    document.querySelectorAll('#pad button').forEach(b => {
+      const kind = b.dataset.pan;
+      b.addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); e.preventDefault(); stop();
+        if (kind === 'home') {
+          const [px, py, pz] = Enigma3DScene.HOME.pos, [tx, ty, tz] = Enigma3DScene.HOME.target;
+          s.flyCamera({ x: px, y: py, z: pz }, { x: tx, y: ty, z: tz }, !ctl.enableRotate); return;
+        }
+        gsap.killTweensOf(cam.position); gsap.killTweensOf(ctl.target);
+        move(kind, 0.04); try { b.setPointerCapture(e.pointerId); } catch (er) {}
+        hold = { timer: setTimeout(() => {
+          let last = performance.now();
+          const tick = (now) => { if (!hold) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; move(kind, 0.5 * dt); hold.raf = requestAnimationFrame(tick); };
+          hold.raf = requestAnimationFrame(tick);
+        }, 250), raf: 0 };
+      });
+      for (const ev of ['pointerup', 'pointerleave', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, (e) => { e.stopPropagation(); stop(); });
+      b.addEventListener('click', (e) => e.stopPropagation());
+    });
+    addEventListener('blur', stop);
+  }
+  _on(id, v) { this.$(id).classList.toggle('on', v); }
+  changeOrder(slot) {
+    const nv = this.$('o' + slot).value, order = this.engine.order.slice(), j = order.indexOf(nv);
+    if (j >= 0 && j !== slot) order[j] = order[slot];
+    order[slot] = nv; this.engine.setRotorOrder(order);
+    for (let i = 0; i < 3; i++) { this.$('o' + i).value = order[i]; this.s.setRotorWiring(i); }
+    this.s.syncRotors();
+    this.audio.ratchet(2);
+  }
+  refreshPairs(msg) {
+    const p = this.engine.pairs; this.$('pairs').textContent = p.length ? p.join(' ') + `  (${p.length}/13)` : I18N.t('none');
+    this.$('msg').textContent = typeof msg === 'string' ? msg : '';
+  }
+  refreshWindows() {
+    for (let i = 0; i < 3; i++) { const c = EnigmaEngine.chr(this.engine.positions[i]); this.$('w' + i).textContent = c; this.$('p' + i).value = c; }
+  }
+  _pointer() {
+    const cv = this.s.renderer.domElement, ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    cv.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      const hit = this.pb.pick(e);
+      if (hit && this.pb.onPointerDown(e, hit)) { this.s.controls.enabled = false; cv.setPointerCapture(e.pointerId); return; }
+      this.s.toNDC(e, ndc); ray.setFromCamera(ndc, this.s.camera);
+      const keyObjs = Object.values(this.s.keys), kh = ray.intersectObjects(keyObjs, true)[0];
+      const rh = ray.intersectObjects(this.s.rotors.map(r => r.hit), false)[0];
+      if (kh && (!rh || kh.distance < rh.distance)) { this.press(kh.object.userData.key); return; }
+      if (rh) {
+        const slot = rh.object.userData.rotorSlot, c = new THREE.Vector3(); rh.object.getWorldPosition(c);
+        const dir = rh.point.y >= c.y ? 1 : -1;
+        this.engine.positions[slot] = (this.engine.positions[slot] + dir + 26) % 26; this.startPos = this.engine.positions.slice();
+        this.s.syncRotors(); this.audio.ratchet(1); this.refreshWindows();
+      }
+    });
+    cv.addEventListener('pointermove', (e) => this.pb.onPointerMove(e));
+    const up = () => { if (this.pb.drag) this.pb.onPointerUp(); this.s.controls.enabled = true; };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  }
+  _keyboard() {
+    addEventListener('keydown', (e) => {
+      const t = e.target.tagName; if (t === 'TEXTAREA' || t === 'INPUT' || t === 'SELECT' || e.repeat || e.ctrlKey || e.metaKey) return;
+      if (e.shiftKey && (e.key === 'V' || e.key === 'v')) { e.preventDefault(); this.copyView(); return; }  // Shift+V: plain V is an Enigma key
+      if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); this.press(e.key.toUpperCase()); }
+    });
+  }
+  static translit(s) { return String(s).replace(/ß/g, 'SS').replace(/ẞ/g, 'SS').toUpperCase().replace(/Ä/g, 'AE').replace(/Ö/g, 'OE').replace(/Ü/g, 'UE'); }
+  async setLang(lang, first = false) {
+    const prev = this.lang; this.lang = lang; I18N.lang = lang;
+    try { localStorage.setItem('enigmaLang', lang); } catch (e) {}
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = I18N.t(el.dataset.i18n));
+    document.querySelectorAll('[data-i18n-html]').forEach(el => el.innerHTML = I18N.t(el.dataset.i18nHtml));
+    document.querySelectorAll('[data-i18n-title]').forEach(el => el.title = I18N.t(el.dataset.i18nTitle));
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = I18N.t(el.dataset.i18nPh));
+    document.querySelectorAll('#lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
+    this.$('bExplode').textContent = I18N.t(this.exploded ? 'collapse' : 'explode');
+    this.refreshPairs();
+    if (this.flow && this.flow.open) { this.flow._footer(); this.flow.kick(); }
+    if (lang === 'de' && prev !== 'de' && !first) { this.tapeIn = this.tapeOut = ''; this.renderTapes(); }
+    const wantDe = lang === 'de', isDe = ROWS === LAYOUTS.enigma;
+    if (wantDe === isDe && !first) return;
+    setLayout(wantDe ? 'enigma' : 'qwerty');
+    this.s.relayout(); this.pb.relayout();
+  }
+  typeSeq(str) { [...str].forEach((c, i) => i === 0 ? this.press(c) : setTimeout(() => this.press(c), i * 350)); }
+  press(ch) {
+    const before = this.engine.positions.slice();
+    const path = this.engine.encryptChar(ch); if (!path) return;
+    if (this.flow) this.flow.onPress(path);
+    this.lastPath = path;
+    this.s.pressKey(ch); this.audio.key();
+    const nStep = path.stepped.filter(Boolean).length; setTimeout(() => this.audio.ratchet(nStep), 40);
+    this.s.syncRotors(); this.refreshWindows();
+    setTimeout(() => { this.s.lightLamp(path.lamp); }, 80);
+    this.s.showSignalPath(path); this.s.glowHarness(path); this.pb.glowPath(path);
+    this.tapeIn += path.key; this.tapeOut += path.output; this.renderTapes();
+    return path;
+  }
+  renderTapes() {
+    const grp = (s) => s.replace(/(.{5})/g, '$1 ').trim();
+    this.$('tIn').textContent = grp(this.tapeIn); this.$('tOut').textContent = grp(this.tapeOut);
+  }
+  autoType(text) {
+    this.stopAuto();
+    const q = InteractionController.translit(text).replace(/[^A-Z]/g, '').split(''); if (!q.length) return;
+    this._on('bAuto', true);
+    this.auto = setInterval(() => { if (!q.length) return this.stopAuto(); this.press(q.shift()); }, 350);
+  }
+  stopAuto() { if (this.auto) clearInterval(this.auto); this.auto = null; this._on('bAuto', false); }
+}
+
+window.enigmaApp = new InteractionController();
+</script>
+</body>
+</html>
