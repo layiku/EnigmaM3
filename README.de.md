@@ -45,7 +45,7 @@
 
 ## Starten
 
-`enigma_m3.html` in einem modernen Desktop-Browser öffnen (Chrome, Edge, Firefox, Safari). Eine Internetverbindung ist nötig: Three.js r160 (über `unpkg.com`, ES-Modul-Importmap) und GSAP 3.12 (über `cdn.jsdelivr.net`) werden von CDNs geladen. Kein Build-Schritt und kein Server erforderlich.
+`enigma_m3.html` in einem modernen Desktop-Browser öffnen (Chrome, Edge, Firefox, Safari). Eine Internetverbindung ist nötig: Three.js r160 (über `unpkg.com`, ES-Modul-Importmap) und GSAP 3.12 (über `cdn.jsdelivr.net`) werden von CDNs geladen. Kein Build-Schritt und kein Server erforderlich. Für die Offline-Nutzung `enigma_m3_offline.html` öffnen — Three.js und GSAP sind eingebettet, keine Internetverbindung erforderlich.
 
 ## Bedienelemente
 

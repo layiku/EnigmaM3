@@ -45,7 +45,7 @@
 
 ## 运行方法
 
-用现代桌面浏览器（Chrome、Edge、Firefox、Safari）直接打开 `enigma_m3.html`。需要联网：Three.js r160（通过 `unpkg.com`，ES 模块 import map）与 GSAP 3.12（通过 `cdn.jsdelivr.net`）从 CDN 加载。无需构建或服务器。
+用现代桌面浏览器（Chrome、Edge、Firefox、Safari）直接打开 `enigma_m3.html`。需要联网：Three.js r160（通过 `unpkg.com`，ES 模块 import map）与 GSAP 3.12（通过 `cdn.jsdelivr.net`）从 CDN 加载。无需构建或服务器。离线环境请打开 `enigma_m3_offline.html`，其中已内嵌 Three.js 与 GSAP，无需联网。
 
 ## 操作说明
 
