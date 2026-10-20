@@ -87,4 +87,4 @@ Open `enigma_m3.html` in a modern desktop browser (Chrome, Edge, Firefox, Safari
 
 ## License
 
-No license has been specified yet — add your license.
+Released under the [MIT License](LICENSE).

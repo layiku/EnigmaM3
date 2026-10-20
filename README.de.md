@@ -87,4 +87,4 @@
 
 ## Lizenz
 
-Noch keine Lizenz festgelegt — füge deine Lizenz hinzu.
+Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
