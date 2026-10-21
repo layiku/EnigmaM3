@@ -6,6 +6,11 @@
 
 `enigma_m3.html` 是一个单文件、在浏览器中运行的二战德军 **Enigma M3** 密码机 3D 模拟。模型完全由 Three.js 程序化构建（无外部 3D 模型），使用 GSAP 动画，并由符合真实机械逻辑的 M3 加密引擎驱动。
 
+<p align="center">
+  <img src="enigma-m3-schematic-diagram-dark.png" width="49%" alt="恩尼格玛 M3 原理图 — 暗色">
+  <img src="enigma-m3-schematic-diagram-light.png" width="49%" alt="恩尼格玛 M3 原理图 — 亮色">
+</p>
+
 另附机器的等距轴测原理图（开盖展示转子、键盘与插线板）：[暗色版](enigma-m3-schematic-diagram.html) · [亮色版](enigma-m3-schematic-diagram-light.html)。
 
 ## 功能
