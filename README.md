@@ -6,6 +6,8 @@ English | [简体中文](README.zh-CN.md) | [Deutsch](README.de.md)
 
 `enigma_m3.html` is a single-file, browser-based 3D simulation of the German WWII **Enigma M3** cipher machine. The model is built procedurally with Three.js (no external 3D models), animated with GSAP, and backed by a cryptographically authentic M3 engine.
 
+A standalone isometric schematic diagram of the machine (lid open, showing rotors, keyboard and plugboard) is also included: [dark version](enigma-m3-schematic-diagram.html) · [light version](enigma-m3-schematic-diagram-light.html).
+
 ## Features
 
 **Cipher engine**

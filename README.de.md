@@ -6,6 +6,8 @@
 
 `enigma_m3.html` ist eine browserbasierte 3D-Simulation der deutschen Chiffriermaschine **Enigma M3** aus dem Zweiten Weltkrieg in einer einzigen Datei. Das Modell wird prozedural mit Three.js erzeugt (keine externen 3D-Modelle), mit GSAP animiert und von einer kryptographisch authentischen M3-Engine angetrieben.
 
+Eine eigenständige isometrische Schemazeichnung der Maschine (geöffneter Deckel mit Rotoren, Tastatur und Steckerbrett) ist ebenfalls enthalten: [dunkle Version](enigma-m3-schematic-diagram.html) · [helle Version](enigma-m3-schematic-diagram-light.html).
+
 ## Funktionen
 
 **Chiffrier-Engine**
